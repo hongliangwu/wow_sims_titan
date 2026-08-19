@@ -1,0 +1,507 @@
+@use 'sass:map';
+
+@import './filters_menu';
+
+$source-cell-width: 16rem;
+$ep-cell-width: 4rem;
+$favorite-cell-width: 2rem;
+
+.gear-picker-root {
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+
+	.gear-picker-left,
+	.gear-picker-right {
+		width: 50%;
+	}
+
+	.item-picker-root {
+		display: flex;
+
+		&:not(:last-child) {
+			margin-bottom: $block-spacer;
+		}
+
+		.item-picker-icon {
+			@include wowhead-background-icon;
+			width: 4rem;
+			height: 4rem;
+			border: $border-default;
+		}
+	}
+
+	.gear-picker-left {
+		.item-picker-root {
+			flex-direction: row;
+			text-align: left;
+
+			// Add space to separate weapon categories
+			&:nth-child(6) {
+				margin-bottom: map.get($spacers, 5);
+			}
+		}
+	}
+
+	.gear-picker-right {
+		.item-picker-root {
+			flex-direction: row-reverse;
+
+			.item-picker-labels-container {
+				align-items: flex-end;
+			}
+
+			.item-picker-ilvl {
+				right: 0;
+				@include media-breakpoint-down(md) {
+					left: 0;
+				}
+			}
+		}
+	}
+}
+
+.item-picker-icon-wrapper {
+	position: relative;
+	width: 4rem;
+	height: 4rem;
+	border: var(--border-default);
+
+	@include media-breakpoint-down(lg) {
+		width: 3rem;
+		height: 3rem;
+	}
+}
+
+.item-picker-ilvl {
+	position: absolute;
+	padding-left: 1px;
+	background: rgba($black, 0.5);
+	font-size: 0.75rem;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.item-picker-sockets-container {
+	@include vertical-bottom;
+	@include horizontal-center;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+}
+
+.selector-modal {
+	.modal-header {
+		padding-bottom: 0;
+
+		.selector-modal-tabs {
+			border-bottom: 0;
+
+			.selector-modal-tab-gem {
+				height: 100%;
+				padding: 0;
+				padding: calc(var(--bs-nav-link-padding-y) / 2) calc(var(--bs-nav-link-padding-x) / 2);
+				margin-left: calc(var(--bs-nav-link-padding-x) / 2);
+				margin-right: calc(var(--bs-nav-link-padding-x) / -2);
+				display: flex;
+				align-items: center;
+				opacity: 0.7;
+				transition: opacity 0.15s ease-in-out;
+
+				&:hover,
+				&.active {
+					opacity: 1;
+				}
+
+				.gem-socket-container {
+					--gem-width: 2rem;
+				}
+			}
+		}
+	}
+}
+
+.item-picker-labels-container {
+	padding: map.get($spacers, 2);
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+
+	.item-picker-name {
+		color: white;
+		font-size: map-get($font-sizes, 6);
+		letter-spacing: normal;
+	}
+
+	.item-picker-enchant {
+		color: $item-quality-uncommon;
+		font-size: $content-font-size;
+		letter-spacing: normal;
+	}
+}
+
+.item-picker-labels-container {
+	padding: map-get($spacers, 2);
+	flex: 1;
+
+	.item-picker-name {
+		color: white;
+		font-size: map-get($font-sizes, 6);
+		letter-spacing: normal;
+	}
+
+	.item-picker-enchant {
+		color: $item-quality-uncommon;
+		font-size: $content-font-size;
+		letter-spacing: normal;
+	}
+}
+
+@include media-breakpoint-down(xl) {
+	.gear-picker-right {
+		margin-bottom: 2 * map.get($spacers, 3);
+	}
+}
+
+@include media-breakpoint-down(md) {
+	.gear-picker-root {
+		.gear-picker-left {
+			.item-picker-root:last-child {
+				margin-bottom: map.get($spacers, 5);
+			}
+		}
+
+		.gear-picker-right {
+			.item-picker-root {
+				flex-direction: row;
+
+				.item-picker-labels-container {
+					align-items: flex-start;
+				}
+			}
+		}
+	}
+}
+
+.selector-modal-tab-content {
+	.selector-modal-tab-pane {
+		padding: 0;
+
+		.selector-modal-filters {
+			margin-bottom: map.get($spacers, 4);
+			display: flex;
+			align-items: center;
+
+			& > *:not(:last-child) {
+				margin-right: map-get($spacers, 2);
+			}
+
+			input,
+			select {
+				padding-top: $btn-padding-y;
+				padding-bottom: $btn-padding-y;
+				font-size: $btn-font-size;
+			}
+		}
+	}
+}
+
+.selector-modal-search {
+	max-width: 12rem;
+}
+
+.selector-modal-titan-phase-selector {
+	min-width: 8rem;
+
+	.phase-selector {
+		margin-bottom: 0;
+	}
+}
+
+.selector-modal-remove-button {
+	margin-left: auto;
+}
+
+.selector-modal-list-labels {
+	display: flex;
+	padding-right: map-get($spacers, 2);
+	margin-right: map-get($spacers, 3);
+	margin-bottom: map-get($spacers, 2);
+	font-size: 1.125rem;
+
+	label {
+		font-weight: normal;
+	}
+
+	.item-label {
+		flex: 1;
+	}
+
+	.source-label {
+		width: $source-cell-width;
+		margin-left: map-get($spacers, 3);
+	}
+
+	.ep-label {
+		width: $ep-cell-width;
+		margin-left: map-get($spacers, 3);
+		display: flex;
+		align-items: center;
+		float: right;
+	}
+
+	.favorite-label {
+		width: $favorite-cell-width;
+		margin-left: map-get($spacers, 3);
+	}
+}
+
+.selector-modal-list {
+	width: 100%;
+	max-height: 65vh;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 0;
+	margin-bottom: 0;
+
+	&.hide-ep {
+		.selector-modal-list-item-ep {
+			display: none;
+		}
+	}
+}
+
+// TODO: Move all of these to a shared file, as they're used in other places too
+.selector-modal-list-item {
+	padding: 0.5rem;
+	display: flex;
+	align-items: center;
+	background-color: #111218;
+
+	&:nth-child(2n) {
+		background: $table-row-even-bg;
+	}
+
+	&:nth-child(2n + 1) {
+		background: $table-row-odd-bg;
+	}
+
+	&:hover {
+		background: #333;
+	}
+
+	&.active {
+		.selector-modal-list-item-icon {
+			outline: 2px solid $success;
+		}
+	}
+
+	.selector-modal-list-item-link {
+		display: flex;
+		align-items: center;
+	}
+
+	.selector-modal-list-label-cell {
+		flex: 1;
+		display: flex;
+		align-items: center;
+	}
+
+	.selector-modal-list-item-icon {
+		@include wowhead-background-icon;
+		width: 3rem;
+		height: 3rem;
+		border: $border-default;
+	}
+
+	.selector-modal-list-item-name {
+		font-size: 1.125rem;
+		margin-left: map-get($spacers, 3);
+		letter-spacing: normal;
+		font-weight: normal;
+		cursor: pointer;
+	}
+}
+
+.selector-modal-list-item-source-container {
+	margin-left: map-get($spacers, 3);
+	width: $source-cell-width;
+}
+
+.selector-modal-list-item-ilvl-container {
+	margin-left: map-get($spacers, 3);
+}
+
+.selector-modal-list-item-favorite {
+	margin-left: map-get($spacers, 3);
+	color: $brand;
+}
+
+.selector-modal-list-item-favorite:hover {
+	text-shadow:
+		0 0 10px white,
+		0 0 10px white;
+}
+
+.selector-modal-list-item-ep {
+	width: $ep-cell-width;
+	margin-left: map-get($spacers, 3);
+	display: flex;
+	align-items: center;
+
+	& > span {
+		display: inline-block;
+		color: white;
+		text-align: right;
+	}
+
+	.selector-modal-list-item-ep-delta {
+		margin-left: map-get($spacers, 1);
+		font-size: 0.8rem;
+	}
+}
+
+.heroic-label {
+	margin-left: map-get($spacers, 1);
+	color: $item-quality-uncommon;
+}
+
+.titan-item-badge {
+	margin-left: map-get($spacers, 1);
+	color: #ff7d0a;
+	font-weight: 600;
+}
+
+.phase-item-badge {
+	margin-left: map-get($spacers, 1);
+	color: #9d9d9d;
+	font-size: 0.8rem;
+}
+
+.titan-item-tooltip {
+	--bs-tooltip-bg: transparent;
+	--bs-tooltip-opacity: 1;
+	--bs-tooltip-color: #ffffff;
+
+	.tooltip-inner {
+		max-width: 20rem;
+		min-width: 16rem;
+		text-align: left;
+		background: #0a0a0a;
+		border: 1px solid #c0c0c0;
+		padding: 8px 10px;
+		font-family: Verdana, "Microsoft YaHei", "PingFang SC", sans-serif;
+		font-size: 13px;
+		line-height: 1.35;
+		color: #ffffff;
+		border-radius: 0;
+		box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+	}
+
+	.tooltip-arrow {
+		display: none;
+	}
+
+	.titan-tt-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 0.75rem;
+		margin-bottom: 2px;
+	}
+
+	.titan-tt-name {
+		font-weight: 700;
+		font-size: 14px;
+	}
+
+	.titan-tt-badge {
+		color: #9d9d9d;
+		font-size: 12px;
+		white-space: nowrap;
+		font-weight: 400;
+	}
+
+	.titan-tt-ilvl {
+		color: #ffd100;
+	}
+
+	.titan-tt-row {
+		display: flex;
+		justify-content: space-between;
+		gap: 1.5rem;
+	}
+
+	.titan-tt-green {
+		color: #1eff00;
+	}
+
+	.titan-tt-socket-row {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.titan-tt-gem {
+		display: inline-block;
+		width: 12px;
+		height: 12px;
+		border: 1px solid #000;
+		flex-shrink: 0;
+	}
+
+	.titan-tt-gem-red {
+		background: #c41e3a;
+	}
+
+	.titan-tt-gem-yellow {
+		background: #e5c100;
+	}
+
+	.titan-tt-gem-blue {
+		background: #0070dd;
+	}
+
+	.titan-tt-gem-meta {
+		background: #9d9d9d;
+	}
+
+	.titan-tt-gem-prismatic {
+		background: linear-gradient(135deg, #c41e3a 0%, #e5c100 50%, #0070dd 100%);
+	}
+
+	.titan-tt-socket-bonus {
+		color: #9d9d9d;
+	}
+
+	.titan-tt-set {
+		color: #ffd100;
+		margin-top: 6px;
+	}
+
+	.titan-tt-set-piece {
+		color: #9d9d9d;
+		padding-left: 0.5rem;
+	}
+
+	.titan-tt-set-piece.is-active {
+		color: #ffd100;
+	}
+
+	.titan-tt-set-bonus {
+		color: #9d9d9d;
+		margin-top: 2px;
+	}
+
+	.titan-tt-set-bonus.is-active {
+		color: #1eff00;
+	}
+}
+
+@include media-breakpoint-down(lg) {
+	.item-picker-icon {
+		width: 3rem;
+		height: 3rem;
+	}
+}

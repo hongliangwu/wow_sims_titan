@@ -1,0 +1,202 @@
+@import "./detailed_results/dps_histogram";
+@import "./detailed_results/log_runner";
+@import "./detailed_results/player_damage";
+@import "./detailed_results/resource_metrics";
+@import "./detailed_results/results_filter";
+@import "./detailed_results/source_chart";
+@import "./detailed_results/timeline";
+@import "./detailed_results/topline_results";
+
+.detailed-results-manager-root {
+	display: flex;
+	flex-direction: column;
+	& > * {
+		min-height: 0;
+}
+}
+
+.detailed-results-controls-div {
+	display: flex;
+	margin-bottom: $block-spacer;
+
+	.detailed-results-new-tab-button {
+		margin-right: $block-spacer;
+	}
+}
+
+.all-players .single-player-only {
+	display: none;
+}
+
+.single-player .all-players-only {
+	display: none;
+}
+
+.individual-sim .single-player-only {
+	display: initial;
+}
+.individual-sim .all-players-only {
+	display: none;
+}
+
+.dr-row {
+	padding-right: 10px
+}
+
+.dr-root {
+	display: flex;
+	flex-direction: column;
+
+	&.dr-no-results {
+		.dr-row {
+			display: none;
+		}
+	}
+
+	&:not(.dr-no-results) {
+		#noResultsTab {
+			display: none;
+		}
+	}
+
+	> {
+		.tab-content {
+			padding-top: 1rem;
+		}
+
+		.tab-content > .tab-pane.dr-tab-content {
+			padding-top: 0;
+			padding-bottom: 0;
+		}
+	}
+}
+
+.dr-toolbar {
+	position: sticky;
+	top: $sim-header-height;
+	padding-left: var(--container-padding);
+	padding-right: var(--container-padding);
+	margin-left: calc(-1 * var(--container-padding));
+	margin-right: calc(-1 * var(--container-padding));
+	display: flex;
+	transition: background-color .15s ease-in-out;
+	// This needs to be less than $header-z-index otherwise the toolbar overlaps the import/export dropdowns
+	z-index: $header-z-index - 1;
+
+	&::after {
+		content: ' ';
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		width: calc(100% - 2 * var(--container-padding));
+		height: 1px;
+		margin-left: auto;
+		margin-right: auto;
+		background-color: $border-color;
+		transition: width .15s ease-in-out;
+	}
+
+	&.stuck {
+		background: rgba(var(--theme-background-color), var(--theme-background-opacity));
+
+		&::after {
+			width: 100%;
+		}
+	}
+
+	& > * {
+		min-height: 0;
+	}
+
+	.nav-tabs {
+		border-bottom: 0;
+	}
+
+	.input-root {
+		margin-bottom: 0;
+	}
+}
+
+#noResultsTab {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: calc(map-get($spacers, 3) * 2);
+	font-size: 1rem;
+}
+
+.results-filter {
+	display: flex !important;
+	align-items: center;
+}
+
+.individual-sim .player-filter-root {
+	display: none !important;
+}
+
+.tabs-filler {
+	flex-grow: 1;
+}
+
+.other-metrics {
+	display: flex;
+	width: 100%;
+}
+
+.metrics-table {
+	width: 100%;
+}
+
+.metrics-table-header-row {
+	border-bottom: 2px solid white;
+}
+
+.metrics-table-header-cell {
+	padding: .25rem;
+	cursor: pointer;
+}
+
+.metrics-table-body tr {
+	border-bottom: $border-default;
+}
+
+.metrics-table-body tr:hover {
+	background-color: rgba(0,0,0,0.5);
+}
+
+.metrics-table-body td {
+	padding: .25rem;
+}
+
+.metrics-table-header-cell:first-child, .metrics-table-body td:first-child {
+	text-align: left;
+}
+.metrics-table-header-cell:not(:first-child), .metrics-table-body td:not(:first-child) {
+	text-align: right;
+}
+
+.metrics-action-icon {
+  @include wowhead-background-icon;
+	height: 30px;
+	width: 30px;
+	vertical-align: middle;
+	margin-right: 4px;
+}
+
+.parent-metric {
+	cursor: pointer;
+}
+.child-metric>*:first-child {
+	padding-left: 20px;
+}
+
+tr:not(.parent-metric) .expand-toggle {
+	display: none;
+}
+.parent-metric.expand .fa-caret-down {
+	display: none;
+}
+.parent-metric:not(.expand) .fa-caret-right {
+	display: none;
+}

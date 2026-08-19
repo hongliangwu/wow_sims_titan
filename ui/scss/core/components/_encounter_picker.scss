@@ -1,0 +1,112 @@
+@use 'sass:map';
+
+@import './enum_picker';
+@import './list_picker';
+@import './number_picker';
+
+.encounter-picker-root {
+	display: flex;
+	flex-wrap: wrap;
+
+	.execute-group {
+		width: 100%;
+		flex-direction: column;
+		flex-wrap: nowrap;
+	}
+
+	.advanced-button {
+		min-width: calc(50% - 0.5rem);
+	}
+}
+
+.advanced-encounter-picker-modal {
+	.encounter-picker {
+		width: 33.33%;
+	}
+
+	.execute-group {
+		flex-direction: row;
+	}
+
+	.encounter-header {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+
+		.picker-group {
+			&:first-child {
+				width: 66%;
+			}
+
+			&:last-child {
+				width: 100%;
+			}
+		}
+	}
+
+	.target-picker-root {
+		display: flex;
+		flex-direction: row;
+
+		.target-picker-section {
+			width: 33.33%;
+
+			&:not(:last-child) {
+				margin-right: map-get($spacers, 3);
+			}
+
+			&.target-picker-section2 {
+				padding-top: 1.2rem;
+			}
+		}
+	}
+}
+
+.hide-threat-metrics {
+	.advanced-encounter-picker-modal {
+		// Use visibility to maintain thirds nicely for the modal layout
+		.target-picker-section3.threat-metrics {
+			display: block !important;
+			visibility: hidden;
+
+			.input-root {
+				display: none;
+			}
+		}
+	}
+}
+
+@include media-breakpoint-down(xxl) {
+	.encounter-picker-root {
+		.advanced-button {
+			width: 100%;
+		}
+	}
+}
+
+@include media-breakpoint-down(xl) {
+	.hide-threat-metrics {
+		.advanced-encounter-picker-modal {
+			// Hide this section instead on < smaller screens
+			.target-picker-section3.threat-metrics {
+				display: none !important;
+			}
+		}
+	}
+
+	.advanced-encounter-picker-modal {
+		.encounter-header {
+			.picker-group {
+				width: 100% !important;
+			}
+		}
+
+		.target-picker-root {
+			.target-picker-section {
+				width: 100%;
+
+				margin-right: 0;
+			}
+		}
+	}
+}

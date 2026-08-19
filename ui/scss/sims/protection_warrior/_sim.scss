@@ -1,0 +1,8 @@
+// Set color variables which control the site theme.
+.protection-warrior-sim-ui {
+	@include theme-color(
+		$warrior,
+		.95,
+		'/wotlk/assets/img/protection_warrior_background.jpg'
+	);
+}

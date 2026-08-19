@@ -1,0 +1,116 @@
+@use "sass:map";
+
+$sim-header-height: 4.5rem;
+
+td, th {
+  padding: auto;
+}
+
+.sim-ui {
+	// Allow for styled scrolling
+	max-height: 100vh;
+	overflow-y: auto;
+	scrollbar-color: var(--bs-primary) $body-bg;
+	scrollbar-width: thin;
+
+	&::-webkit-scrollbar {
+		width: .2rem;
+	}
+
+	&::-webkit-scrollbar-track  {
+    background-color: $body-bg;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--bs-primary);
+	}
+
+	.sim-root {
+		height: 100%;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+
+		.sim-container {
+			display: flex;
+			flex: 1;
+		}
+	
+		.notices-banner {
+			width: 100%;
+			background: lighten($body-bg, 5);
+		}
+
+		.sim-content {
+			padding-left: var(--container-padding);
+			padding-right: var(--container-padding);
+			flex: 4;
+			z-index: 1;
+		}
+	}
+}
+
+.sim-bg {
+	position: fixed;
+	// These allow the background to fill the page and not be adjusted by browser scrollbars
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background-image:
+		linear-gradient(
+			rgba(var(--theme-background-color), var(--theme-background-opacity)),
+			rgba(var(--theme-background-color), var(--theme-background-opacity))
+		),
+		var(--theme-background-image);
+	background-repeat: no-repeat;
+	background-size: cover;
+	z-index: -1;
+}
+
+// TODO: Move these to an organized partial
+.hide-damage-metrics .damage-metrics {
+	display: none !important;
+}
+
+.hide-threat-metrics .threat-metrics {
+	display: none !important;
+}
+
+.hide-healing-metrics .healing-metrics {
+	display: none !important;
+}
+
+.hide-experimental .experimental {
+	display: none !important;
+}
+
+.hide-in-front-of-target .in-front-of-target {
+	display: none !important;
+}
+
+.hide-ep-ratios .ep-ratios {
+	display: none !important;
+}
+// END TODO
+
+@include media-breakpoint-down(lg) {
+	$sim-header-height: 65px;
+
+	.sim-ui {
+		.sim-root {
+			.sim-bg {
+				left: 0;
+			}
+
+			.sim-container {
+				flex-direction: column;
+			}
+
+			.sim-sidebar, .sim-content {
+				width: 100%;
+				min-height: unset;
+			}
+		}
+	}
+}

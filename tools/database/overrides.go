@@ -1,0 +1,941 @@
+package database
+
+import (
+	"regexp"
+
+	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
+)
+
+var OtherItemIdsToFetch = []string{
+	// Hallow's End Ilvl bumped rings
+	"211817",
+	"211844",
+	"211847",
+	"211850",
+	"211851",
+}
+
+var ItemOverrides = []*proto.UIItem{
+	{ /** Destruction Holo-gogs */ Id: 32494, ClassAllowlist: []proto.Class{proto.Class_ClassMage, proto.Class_ClassPriest, proto.Class_ClassWarlock}},
+	{ /** Gadgetstorm Goggles */ Id: 32476, ClassAllowlist: []proto.Class{proto.Class_ClassShaman}},
+	{ /** Magnified Moon Specs */ Id: 32480, ClassAllowlist: []proto.Class{proto.Class_ClassDruid}},
+	{ /** Quad Deathblow X44 Goggles */ Id: 34353, ClassAllowlist: []proto.Class{proto.Class_ClassDruid, proto.Class_ClassRogue}},
+	{ /** Hyper-Magnified Moon Specs */ Id: 35182, ClassAllowlist: []proto.Class{proto.Class_ClassDruid}},
+	{ /** Lightning Etched Specs */ Id: 34355, ClassAllowlist: []proto.Class{proto.Class_ClassShaman}},
+	{ /** Annihilator Holo-Gogs */ Id: 34847, ClassAllowlist: []proto.Class{proto.Class_ClassMage, proto.Class_ClassPriest, proto.Class_ClassWarlock}},
+
+	// Balance T9 "of Conquest" Alliance set
+	{Id: 48158, SetName: "Malfurion's Regalia"},
+	{Id: 48159, SetName: "Malfurion's Regalia"},
+	{Id: 48160, SetName: "Malfurion's Regalia"},
+	{Id: 48161, SetName: "Malfurion's Regalia"},
+	{Id: 48162, SetName: "Malfurion's Regalia"},
+
+	// Deathknight T9 "of Conquest" Horde set
+	{Id: 48501, SetName: "Koltira's Battlegear"},
+	{Id: 48502, SetName: "Koltira's Battlegear"},
+	{Id: 48503, SetName: "Koltira's Battlegear"},
+	{Id: 48504, SetName: "Koltira's Battlegear"},
+	{Id: 48505, SetName: "Koltira's Battlegear"},
+
+	// Deathknight T9 "of Conquest" Tank Horde set
+	{Id: 48558, SetName: "Koltira's Plate"},
+	{Id: 48559, SetName: "Koltira's Plate"},
+	{Id: 48560, SetName: "Koltira's Plate"},
+	{Id: 48561, SetName: "Koltira's Plate"},
+	{Id: 48562, SetName: "Koltira's Plate"},
+
+	// Valorous T8 Sets
+	{Id: 45375, Phase: 2},
+	{Id: 45381, Phase: 2},
+	{Id: 45382, Phase: 2},
+	{Id: 45376, Phase: 2},
+	{Id: 45370, Phase: 2},
+	{Id: 45371, Phase: 2},
+	{Id: 45383, Phase: 2},
+	{Id: 45372, Phase: 2},
+	{Id: 45377, Phase: 2},
+	{Id: 45384, Phase: 2},
+	{Id: 45379, Phase: 2},
+	{Id: 45385, Phase: 2},
+	{Id: 45380, Phase: 2},
+	{Id: 45373, Phase: 2},
+	{Id: 45374, Phase: 2},
+	{Id: 45391, Phase: 2},
+	{Id: 45386, Phase: 2},
+	{Id: 45340, Phase: 2},
+	{Id: 45335, Phase: 2},
+	{Id: 45336, Phase: 2},
+	{Id: 45341, Phase: 2},
+	{Id: 45337, Phase: 2},
+	{Id: 45342, Phase: 2},
+	{Id: 45338, Phase: 2},
+	{Id: 45343, Phase: 2},
+	{Id: 45339, Phase: 2},
+	{Id: 45344, Phase: 2},
+	{Id: 45419, Phase: 2},
+	{Id: 45417, Phase: 2},
+	{Id: 45420, Phase: 2},
+	{Id: 45421, Phase: 2},
+	{Id: 45422, Phase: 2},
+	{Id: 45387, Phase: 2},
+	{Id: 45392, Phase: 2},
+	{Id: 46131, Phase: 2},
+	{Id: 45365, Phase: 2},
+	{Id: 45367, Phase: 2},
+	{Id: 45369, Phase: 2},
+	{Id: 45368, Phase: 2},
+	{Id: 45388, Phase: 2},
+	{Id: 45393, Phase: 2},
+	{Id: 46313, Phase: 2},
+	{Id: 45351, Phase: 2},
+	{Id: 45355, Phase: 2},
+	{Id: 45345, Phase: 2},
+	{Id: 45356, Phase: 2},
+	{Id: 45346, Phase: 2},
+	{Id: 45347, Phase: 2},
+	{Id: 45357, Phase: 2},
+	{Id: 45352, Phase: 2},
+	{Id: 45358, Phase: 2},
+	{Id: 45348, Phase: 2},
+	{Id: 45359, Phase: 2},
+	{Id: 45349, Phase: 2},
+	{Id: 45353, Phase: 2},
+	{Id: 45354, Phase: 2},
+	{Id: 45394, Phase: 2},
+	{Id: 45395, Phase: 2},
+	{Id: 45389, Phase: 2},
+	{Id: 45360, Phase: 2},
+	{Id: 45361, Phase: 2},
+	{Id: 45362, Phase: 2},
+	{Id: 45363, Phase: 2},
+	{Id: 45364, Phase: 2},
+	{Id: 45390, Phase: 2},
+	{Id: 45429, Phase: 2},
+	{Id: 45424, Phase: 2},
+	{Id: 45430, Phase: 2},
+	{Id: 45425, Phase: 2},
+	{Id: 45426, Phase: 2},
+	{Id: 45431, Phase: 2},
+	{Id: 45427, Phase: 2},
+	{Id: 45432, Phase: 2},
+	{Id: 45428, Phase: 2},
+	{Id: 45433, Phase: 2},
+	{Id: 45396, Phase: 2},
+	{Id: 45397, Phase: 2},
+	{Id: 45398, Phase: 2},
+	{Id: 45399, Phase: 2},
+	{Id: 45400, Phase: 2},
+	{Id: 45413, Phase: 2},
+	{Id: 45412, Phase: 2},
+	{Id: 45406, Phase: 2},
+	{Id: 45414, Phase: 2},
+	{Id: 45401, Phase: 2},
+	{Id: 45411, Phase: 2},
+	{Id: 45402, Phase: 2},
+	{Id: 45408, Phase: 2},
+	{Id: 45409, Phase: 2},
+	{Id: 45403, Phase: 2},
+	{Id: 45415, Phase: 2},
+	{Id: 45410, Phase: 2},
+	{Id: 45404, Phase: 2},
+	{Id: 45405, Phase: 2},
+	{Id: 45416, Phase: 2},
+
+	// Other items Wowhead has the wrong phase listed for
+	// Ick's loot table from Pit of Saron
+	{Id: 49812, Phase: 4},
+	{Id: 49808, Phase: 4},
+	{Id: 49811, Phase: 4},
+	{Id: 49807, Phase: 4},
+	{Id: 49810, Phase: 4},
+	{Id: 49809, Phase: 4},
+
+	// Drape of Icy Intent
+	{Id: 45461, Phase: 2},
+
+	// Valentine's day event rewards
+	{Id: 51804, Phase: 2},
+	{Id: 51805, Phase: 2},
+	{Id: 51806, Phase: 2},
+	{Id: 51807, Phase: 2},
+	{Id: 51808, Phase: 2},
+
+	// Cata pre-patch event items
+	{Id: 53492, Phase: 5},
+
+	// Heirloom Dwarven Handcannon, Wowhead partially glitchs out and shows us some other lvl calc for this
+	{Id: 44093, Stats: stats.Stats{stats.MeleeCrit: 30, stats.SpellCrit: 30, stats.Resilience: 13, stats.AttackPower: 34}.ToFloatArray()},
+
+	// Darkmoon Card: Berserker! - override AP to 200 (default 100)
+	{Id: 42989, Stats: stats.Stats{stats.AttackPower: 200, stats.RangedAttackPower: 200, stats.Resilience: 100}.ToFloatArray()},
+
+	// 毁灭王冠 (custom, hunter mail head)
+	{
+		Id:             255125,
+		Name:           "毁灭王冠",
+		Type:           proto.ItemType_ItemTypeHead,
+		ArmorType:      proto.ArmorType_ArmorTypeMail,
+		Ilvl:           213,
+		Quality:        proto.ItemQuality_ItemQualityEpic,
+		ClassAllowlist: []proto.Class{proto.Class_ClassHunter},
+		Stats: stats.Stats{
+			stats.Agility:           124, // 69 + 21 + 34
+			stats.Stamina:           62,
+			stats.Intellect:         61,
+			stats.AttackPower:       236, // 50 + 186
+			stats.RangedAttackPower: 236,
+			stats.MeleeCrit:         59, // 20 + 39
+			stats.SpellCrit:         59, // WotLK crit rating is unified
+			stats.MeleeHaste:        24,
+			stats.Armor:             1045,
+		}.ToFloatArray(),
+		GemSockets: []proto.GemColor{
+			proto.GemColor_GemColorRed,
+			proto.GemColor_GemColorYellow,
+			proto.GemColor_GemColorBlue,
+		},
+		SocketBonus: stats.Stats{stats.AttackPower: 16, stats.RangedAttackPower: 16}.ToFloatArray(),
+	},
+
+	// 北境肩甲 (custom, DK plate shoulder)
+	{
+		Id:             257629,
+		Name:           "北境肩甲",
+		Type:           proto.ItemType_ItemTypeShoulder,
+		ArmorType:      proto.ArmorType_ArmorTypePlate,
+		Ilvl:           213,
+		Quality:        proto.ItemQuality_ItemQualityEpic,
+		SetName:        "北境",
+		ClassAllowlist: []proto.Class{proto.Class_ClassDeathknight},
+		Stats: stats.Stats{
+			stats.Strength:  75,
+			stats.Stamina:   85,
+			stats.MeleeCrit: 43,
+			stats.SpellCrit: 43, // WotLK crit rating is unified
+			stats.Expertise: 49,
+			stats.Armor:     1723,
+		}.ToFloatArray(),
+		GemSockets: []proto.GemColor{
+			proto.GemColor_GemColorYellow,
+		},
+		SocketBonus: stats.Stats{stats.Strength: 4}.ToFloatArray(),
+	},
+
+	// 北境战盔 (custom, replace Id with real item ID when known)
+	{
+		Id:             257631,
+		Name:           "北境战盔",
+		Type:           proto.ItemType_ItemTypeHead,
+		ArmorType:      proto.ArmorType_ArmorTypePlate,
+		Ilvl:           213,
+		Quality:        proto.ItemQuality_ItemQualityEpic,
+		SetName:        "北境",
+		ClassAllowlist: []proto.Class{proto.Class_ClassDeathknight},
+		Stats: stats.Stats{
+			stats.Strength:  85,
+			stats.Stamina:   98,
+			stats.MeleeHit:  86,
+			stats.SpellHit:  86, // WotLK hit rating is unified (melee + spell)
+			stats.MeleeCrit: 32,
+			stats.SpellCrit: 32, // WotLK crit rating is unified
+			stats.Armor:     1867,
+		}.ToFloatArray(),
+		GemSockets: []proto.GemColor{
+			proto.GemColor_GemColorMeta,   // 多彩插槽
+			proto.GemColor_GemColorYellow, // 黄槽
+		},
+		SocketBonus: stats.Stats{stats.Strength: 8}.ToFloatArray(),
+	},
+
+	// 暗铁作战披风 (custom, back cloth)
+	{
+		Id:        30729,
+		Name:      "暗铁作战披风",
+		Type:      proto.ItemType_ItemTypeBack,
+		ArmorType: proto.ArmorType_ArmorTypeCloth,
+		Ilvl:      219,
+		Quality:   proto.ItemQuality_ItemQualityEpic,
+		Stats: stats.Stats{
+			stats.Strength:   60,
+			stats.Stamina:    60,
+			stats.MeleeCrit:  60,
+			stats.SpellCrit:  60, // WotLK crit rating is unified
+			stats.MeleeHaste: 40,
+			stats.Armor:      155,
+		}.ToFloatArray(),
+	},
+
+	// 稳固护腕 (custom, leather wrist)
+	{
+		Id:        259901,
+		Name:      "稳固护腕",
+		Type:      proto.ItemType_ItemTypeWrist,
+		ArmorType: proto.ArmorType_ArmorTypeLeather,
+		Ilvl:      213,
+		Quality:   proto.ItemQuality_ItemQualityEpic,
+		Stats: stats.Stats{
+			stats.Agility:           42,
+			stats.Stamina:           52,
+			stats.AttackPower:       97,
+			stats.RangedAttackPower: 97,
+			stats.MeleeHaste:        19,
+			stats.ArmorPenetration:  29,
+			stats.Armor:             253,
+		}.ToFloatArray(),
+		GemSockets:  []proto.GemColor{proto.GemColor_GemColorYellow},
+		SocketBonus: stats.Stats{stats.ArmorPenetration: 4}.ToFloatArray(),
+	},
+
+	// 残忍利刃 (custom, 1H sword)
+	{
+		Id:              255132,
+		Name:            "残忍利刃",
+		Type:            proto.ItemType_ItemTypeWeapon,
+		WeaponType:      proto.WeaponType_WeaponTypeSword,
+		HandType:        proto.HandType_HandTypeOneHand,
+		Ilvl:            213,
+		Quality:         proto.ItemQuality_ItemQualityEpic,
+		Unique:          true,
+		WeaponDamageMin: 274,
+		WeaponDamageMax: 509,
+		WeaponSpeed:     2.5,
+		Stats: stats.Stats{
+			stats.Agility:           36,
+			stats.Stamina:           45,
+			stats.AttackPower:       73,
+			stats.RangedAttackPower: 73,
+			stats.MeleeCrit:         28,
+			stats.SpellCrit:         28, // WotLK crit rating is unified
+			stats.ArmorPenetration:  19,
+		}.ToFloatArray(),
+	},
+
+	// 烈焰守卫护手 (custom, plate hands)
+	{
+		Id:        255146,
+		Name:      "烈焰守卫护手",
+		Type:      proto.ItemType_ItemTypeHands,
+		ArmorType: proto.ArmorType_ArmorTypePlate,
+		Ilvl:      213,
+		Quality:   proto.ItemQuality_ItemQualityEpic,
+		Stats: stats.Stats{
+			stats.Strength:         79,
+			stats.Stamina:          88,
+			stats.MeleeCrit:        52,
+			stats.SpellCrit:        52, // WotLK crit rating is unified
+			stats.ArmorPenetration: 40,
+			stats.Armor:            1436,
+		}.ToFloatArray(),
+		GemSockets:  []proto.GemColor{proto.GemColor_GemColorRed},
+		SocketBonus: stats.Stats{stats.Strength: 4}.ToFloatArray(),
+	},
+
+	// 北境腰带 (custom, DK plate waist)
+	{
+		Id:             257628,
+		Name:           "北境腰带",
+		Type:           proto.ItemType_ItemTypeWaist,
+		ArmorType:      proto.ArmorType_ArmorTypePlate,
+		Ilvl:           213,
+		Quality:        proto.ItemQuality_ItemQualityEpic,
+		SetName:        "北境",
+		ClassAllowlist: []proto.Class{proto.Class_ClassDeathknight},
+		Stats: stats.Stats{
+			stats.Strength:   75,
+			stats.Stamina:    88,
+			stats.MeleeHaste: 63,
+			stats.Expertise:  44,
+			stats.Armor:      1293,
+		}.ToFloatArray(),
+	},
+
+	// 血警卫的护胫 (custom, plate legs)
+	{
+		Id:        29950,
+		Name:      "血警卫的护胫",
+		Type:      proto.ItemType_ItemTypeLegs,
+		ArmorType: proto.ArmorType_ArmorTypePlate,
+		Ilvl:      219,
+		Quality:   proto.ItemQuality_ItemQualityEpic,
+		Stats: stats.Stats{
+			stats.Strength:         74,
+			stats.Stamina:          97,
+			stats.MeleeCrit:        92,
+			stats.SpellCrit:        92, // WotLK crit rating is unified
+			stats.ArmorPenetration: 61,
+			stats.Armor:            2032,
+		}.ToFloatArray(),
+		// GemSockets: []proto.GemColor{
+		// 	proto.GemColor_GemColorRed,
+		// 	proto.GemColor_GemColorYellow,
+		// 	proto.GemColor_GemColorBlue,
+		// },
+		SocketBonus: stats.Stats{stats.Strength: 8}.ToFloatArray(),
+	},
+
+	// 北境长靴 (custom, DK plate feet)
+	{
+		Id:             257633,
+		Name:           "北境长靴",
+		Type:           proto.ItemType_ItemTypeFeet,
+		ArmorType:      proto.ArmorType_ArmorTypePlate,
+		Ilvl:           213,
+		Quality:        proto.ItemQuality_ItemQualityEpic,
+		SetName:        "北境",
+		ClassAllowlist: []proto.Class{proto.Class_ClassDeathknight},
+		Stats: stats.Stats{
+			stats.Strength:         75,
+			stats.Stamina:          85,
+			stats.MeleeCrit:        63,
+			stats.SpellCrit:        63, // WotLK crit rating is unified
+			stats.ArmorPenetration: 46,
+			stats.Armor:            1580,
+		}.ToFloatArray(),
+	},
+
+	// 海洋之风 (custom, ring unique)
+	{
+		Id:      255106,
+		Name:    "海洋之风",
+		Type:    proto.ItemType_ItemTypeFinger,
+		Ilvl:    213,
+		Quality: proto.ItemQuality_ItemQualityEpic,
+		Unique:  true,
+		Stats: stats.Stats{
+			stats.Agility:           27,
+			stats.Stamina:           29,
+			stats.AttackPower:       113,
+			stats.RangedAttackPower: 113,
+			stats.MeleeHit:          35,
+			stats.SpellHit:          35, // WotLK hit rating is unified
+			stats.FireResistance:    35,
+		}.ToFloatArray(),
+		GemSockets: []proto.GemColor{proto.GemColor_GemColorRed},
+	},
+
+	// 永恒之戒 (custom, ring)
+	{
+		Id:      29298,
+		Name:    "永恒之戒",
+		Type:    proto.ItemType_ItemTypeFinger,
+		Ilvl:    219,
+		Quality: proto.ItemQuality_ItemQualityEpic,
+		Stats: stats.Stats{
+			stats.Agility:           35,
+			stats.Stamina:           56,
+			stats.AttackPower:       92,
+			stats.RangedAttackPower: 92,
+			stats.MeleeCrit:         35,
+			stats.SpellCrit:         35, // WotLK crit rating is unified
+			stats.MeleeHaste:        36,
+		}.ToFloatArray(),
+		GemSockets:  []proto.GemColor{proto.GemColor_GemColorBlue},
+		SocketBonus: stats.Stats{stats.MeleeHit: 4, stats.SpellHit: 4}.ToFloatArray(),
+	},
+}
+
+// Keep these sorted by item ID.
+var ItemAllowList = map[int32]struct{}{
+	11815:  {}, // Hand of Justice
+	12590:  {}, // Felstriker
+	15808:  {}, // Fine Light Crossbow (for hunter testing).
+	18843:  {},
+	18844:  {},
+	18847:  {},
+	18848:  {},
+	19019:  {}, // Thunderfury
+	19808:  {}, // Rockhide Strongfish
+	20837:  {}, // Sunstrider Axe
+	20966:  {}, // Jade Pendant of Blasting
+	21625:  {}, // Scarab Brooch
+	21685:  {}, // Petrified Scarab
+	24114:  {}, // Braided Eternium Chain
+	255106: {}, // 海洋之风 (custom override)
+	255125: {}, // 毁灭王冠 (custom override)
+	255132: {}, // 残忍利刃 (custom override)
+	255146: {}, // 烈焰守卫护手 (custom override)
+	257628: {}, // 北境腰带 (custom override)
+	257629: {}, // 北境肩甲 (custom override)
+	257631: {}, // 北境战盔 (custom override)
+	257633: {}, // 北境长靴 (custom override)
+	259901: {}, // 稳固护腕 (custom override)
+	29298:  {}, // 永恒之戒 (custom override)
+	29950:  {}, // 血警卫的护胫 (custom override)
+	30729:  {}, // 暗铁作战披风 (custom override)
+	28572:  {}, // Blade of the Unrequited
+	28830:  {}, // Dragonspine Trophy
+	29383:  {}, // Bloodlust Brooch
+	29387:  {}, // Gnomeregan Auto-Blocker 600
+	29994:  {}, // Thalassian Wildercloak
+	29996:  {}, // Rod of the Sun King
+	30032:  {}, // Red Belt of Battle
+	30627:  {}, // Tsunami Talisman
+	30720:  {}, // Serpent-Coil Braid
+	31193:  {}, // Blade of Unquenched Thirst
+	32387:  {}, // Idol of the Raven Goddess
+	32658:  {}, // Badge of Tenacity
+	33135:  {}, // Falling Star
+	33140:  {}, // Blood of Amber
+	33143:  {}, // Stone of Blades
+	33144:  {}, // Facet of Eternity
+	33504:  {}, // Libram of Divine Purpose
+	33506:  {}, // Skycall Totem
+	33507:  {}, // Stonebreaker's Totem
+	33508:  {}, // Idol of Budding Life
+	33510:  {}, // Unseen moon idol
+	33829:  {}, // Hex Shrunken Head
+	33831:  {}, // Berserkers Call
+	34472:  {}, // Shard of Contempt
+	34473:  {}, // Commendation of Kael'thas
+	37032:  {}, // Edge of the Tuskarr
+	37574:  {}, // Libram of Furious Blows
+	38072:  {}, // Thunder Capacitor
+	38212:  {}, // Death Knight's Anguish
+	38287:  {}, // Empty Mug of Direbrew
+	38289:  {}, // Coren's Lucky Coin
+	39208:  {}, // Sigil of the Dark Rider
+	41752:  {}, // Brunnhildar Axe
+	6360:   {}, // Steelscale Crushfish
+	8345:   {}, // Wolfshead Helm
+	9449:   {}, // Manual Crowd Pummeler
+
+	// Sets
+	27510: {}, // Tidefury Gauntlets
+	27802: {}, // Tidefury Shoulderguards
+	27909: {}, // Tidefury Kilt
+	28231: {}, // Tidefury Chestpiece
+	28349: {}, // Tidefury Helm
+
+	15056: {}, // Stormshroud Armor
+	15057: {}, // Stormshroud Pants
+	15058: {}, // Stormshroud Shoulders
+	21278: {}, // Stormshroud Gloves
+
+	// Undead Slaying Sets
+	// Plate
+	43068: {},
+	43069: {},
+	43070: {},
+	43071: {},
+	// Cloth
+	43072: {},
+	43073: {},
+	43074: {},
+	43075: {},
+	// Mail
+	43076: {},
+	43077: {},
+	43078: {},
+	43079: {},
+	//Leather
+	43080: {},
+	43081: {},
+	43082: {},
+	43083: {},
+}
+
+// Keep these sorted by item ID.
+var ItemDenyList = map[int32]struct{}{
+	17782: {}, // talisman of the binding shard
+	17783: {}, // talisman of the binding fragment
+	17802: {}, // Deprecated version of Thunderfury
+	18582: {},
+	18583: {},
+	18584: {},
+	24265: {},
+	32384: {},
+	32421: {},
+	32422: {},
+	33482: {},
+	33350: {},
+	34576: {}, // Battlemaster's Cruelty
+	34577: {}, // Battlemaster's Depreavity
+	34578: {}, // Battlemaster's Determination
+	34579: {}, // Battlemaster's Audacity
+	34580: {}, // Battlemaster's Perseverence
+
+	38694: {}, // "Family" Shoulderpads heirloom
+	45084: {}, // 'Book of Crafting Secrets' heirloom
+
+	// '10 man' onyxia head rewards
+	49312: {},
+	49313: {},
+	49314: {},
+
+	50251: {}, // 'one hand shadows edge'
+	53500: {}, // Tectonic Plate
+
+	48880: {}, // DK's Tier 9 Duplicates
+	48881: {}, // DK's Tier 9 Duplicates
+	48882: {}, // DK's Tier 9 Duplicates
+	48883: {}, // DK's Tier 9 Duplicates
+	48884: {}, // DK's Tier 9 Duplicates
+	48885: {}, // DK's Tier 9 Duplicates
+	48886: {}, // DK's Tier 9 Duplicates
+	48887: {}, // DK's Tier 9 Duplicates
+	48888: {}, // DK's Tier 9 Duplicates
+	48889: {}, // DK's Tier 9 Duplicates
+	48890: {}, // DK's Tier 9 Duplicates
+	48891: {}, // DK's Tier 9 Duplicates
+	48892: {}, // DK's Tier 9 Duplicates
+	48893: {}, // DK's Tier 9 Duplicates
+	48894: {}, // DK's Tier 9 Duplicates
+	48895: {}, // DK's Tier 9 Duplicates
+	48896: {}, // DK's Tier 9 Duplicates
+	48897: {}, // DK's Tier 9 Duplicates
+	48898: {}, // DK's Tier 9 Duplicates
+	48899: {}, // DK's Tier 9 Duplicates
+}
+
+// Item icons to include in the DB, so they don't need to be separately loaded in the UI.
+var ExtraItemIcons = []int32{
+	// Pet foods
+	33874,
+	43005,
+
+	// Spellstones
+	41174,
+	41196,
+
+	// Demonic Rune
+	12662,
+
+	// Food IDs
+	27655,
+	27657,
+	27658,
+	27664,
+	33052,
+	33825,
+	33872,
+	34753,
+	34754,
+	34756,
+	34758,
+	34767,
+	34769,
+	42994,
+	42995,
+	42996,
+	42998,
+	42999,
+	43000,
+	43015,
+
+	// Flask IDs
+	13512,
+	22851,
+	22853,
+	22854,
+	22861,
+	22866,
+	33208,
+	40079,
+	44939,
+	46376,
+	46377,
+	46378,
+	46379,
+
+	// Elixer IDs
+	40072,
+	40078,
+	40097,
+	40109,
+	44328,
+	44332,
+
+	// Elixer IDs
+	13452,
+	13454,
+	22824,
+	22827,
+	22831,
+	22833,
+	22834,
+	22835,
+	22840,
+	28103,
+	28104,
+	31679,
+	32062,
+	32067,
+	32068,
+	39666,
+	40068,
+	40070,
+	40073,
+	40076,
+	44325,
+	44327,
+	44329,
+	44330,
+	44331,
+	9088,
+	9224,
+
+	// Potions / In Battle Consumes
+	13442,
+	20520,
+	22105,
+	22788,
+	22828,
+	22832,
+	22837,
+	22838,
+	22839,
+	22849,
+	31677,
+	33447,
+	33448,
+	36892,
+	40093,
+	40211,
+	40212,
+	40536,
+	40771,
+	41119,
+	41166,
+	42545,
+	42641,
+
+	// Poisons
+	43231,
+	43233,
+	43235,
+
+	// Thistle Tea
+	7676,
+
+	// Scrolls
+	37094,
+	43466,
+	43464,
+	37092,
+	37098,
+	43468,
+
+	// Drums
+	49633,
+	49634,
+}
+
+// Raid buffs / debuffs
+var SharedSpellsIcons = []int32{
+	// Revitalize, Rejuv, WG
+	48545,
+	26982,
+	53251,
+
+	// Registered CD's
+	49016,
+	57933,
+	64382,
+	10060,
+	16190,
+	29166,
+	53530,
+	33206,
+	2825,
+	54758,
+
+	// Raid Buffs
+	43002,
+	57567,
+	54038,
+
+	48470,
+	17051,
+
+	25898,
+	25899,
+
+	48942,
+	20140,
+	58753,
+	16293,
+
+	48161,
+	14767,
+
+	58643,
+	52456,
+	57623,
+
+	48073,
+
+	48934,
+	20045,
+	47436,
+
+	53138,
+	30809,
+	19506,
+
+	31869,
+	31583,
+	34460,
+
+	57472,
+	50720,
+
+	53648,
+
+	47440,
+	12861,
+	47982,
+	18696,
+
+	48938,
+	20245,
+	58774,
+	16206,
+
+	17007,
+	34300,
+	29801,
+
+	55610,
+	65990,
+	29193,
+
+	48160,
+	31878,
+	53292,
+	54118,
+	44561,
+
+	24907,
+	48396,
+	51470,
+
+	3738,
+	47240,
+	57722,
+	58656,
+
+	54043,
+	48170,
+	31025,
+	31035,
+	6562,
+	31033,
+	53307,
+	16840,
+	54648,
+
+	// Raid Debuffs
+	8647,
+	47467,
+	55754,
+
+	770,
+	33602,
+	50511,
+	18180,
+	56631,
+	53598,
+
+	26016,
+	47437,
+	12879,
+	48560,
+	16862,
+	55487,
+
+	48566,
+	46855,
+	57393,
+
+	30706,
+	20337,
+	58410,
+
+	47502,
+	12666,
+	55095,
+	51456,
+	53696,
+	48485,
+
+	3043,
+	29859,
+	58413,
+	65855,
+
+	17800,
+	17803,
+	12873,
+	28593,
+
+	33198,
+	51161,
+	48511,
+	47865,
+
+	20271,
+	53408,
+
+	11374,
+	15235,
+
+	27013,
+
+	58749,
+	49071,
+
+	30708,
+}
+
+// If any of these match the item name, don't include it.
+var DenyListNameRegexes = []*regexp.Regexp{
+	regexp.MustCompile(`30 Epic`),
+	regexp.MustCompile(`63 Blue`),
+	regexp.MustCompile(`63 Green`),
+	regexp.MustCompile(`66 Epic`),
+	regexp.MustCompile(`90 Epic`),
+	regexp.MustCompile(`90 Green`),
+	regexp.MustCompile(`Boots 1`),
+	regexp.MustCompile(`Boots 2`),
+	regexp.MustCompile(`Boots 3`),
+	regexp.MustCompile(`Bracer 1`),
+	regexp.MustCompile(`Bracer 2`),
+	regexp.MustCompile(`Bracer 3`),
+	regexp.MustCompile(`DB\d`),
+	regexp.MustCompile(`DEPRECATED`),
+	regexp.MustCompile(`Deprecated: Keanna`),
+	regexp.MustCompile(`Indalamar`),
+	regexp.MustCompile(`Monster -`),
+	regexp.MustCompile(`NEW`),
+	regexp.MustCompile(`PH`),
+	regexp.MustCompile(`QR XXXX`),
+	regexp.MustCompile(`TEST`),
+	regexp.MustCompile(`Test`),
+	regexp.MustCompile(`zOLD`),
+}
+
+// Allows manual overriding for Gem fields in case WowHead is wrong.
+var GemOverrides = []*proto.UIGem{
+	{Id: 33131, Stats: stats.Stats{stats.AttackPower: 32, stats.RangedAttackPower: 32}.ToFloatArray()},
+}
+var GemAllowList = map[int32]struct{}{
+	22459: {}, // Void Sphere
+	36766: {}, // Bright Dragon's Eye
+	36767: {}, // Solid Dragon's Eye
+}
+var GemDenyList = map[int32]struct{}{
+	// pvp non-unique gems not in game currently.
+	32735: {},
+	34142: {}, // Infinite Sphere
+	34143: {}, // Chromatic Sphere
+	35489: {},
+	37430: {}, // Solid Sky Sapphire (Unused)
+	38545: {},
+	38546: {},
+	38547: {},
+	38548: {},
+	38549: {},
+	38550: {},
+}

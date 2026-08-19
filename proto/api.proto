@@ -1,0 +1,480 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "./proto";
+
+import "common.proto";
+import "apl.proto";
+import "deathknight.proto";
+import "druid.proto";
+import "hunter.proto";
+import "mage.proto";
+import "paladin.proto";
+import "priest.proto";
+import "rogue.proto";
+import "shaman.proto";
+import "warlock.proto";
+import "warrior.proto";
+
+message Player {
+	// Label used for logging.
+	string name = 16;
+
+	Race race = 1;
+	Class class = 2;
+
+	EquipmentSpec equipment = 3;
+	Consumes consumes = 4;
+	UnitStats bonus_stats = 36;
+
+	bool enable_item_swap = 46;
+	ItemSwap item_swap = 45;
+
+	IndividualBuffs buffs = 15;
+
+	oneof spec {
+		BalanceDruid balance_druid = 6;
+		FeralDruid feral_druid = 22;
+		FeralTankDruid feral_tank_druid = 26;
+		RestorationDruid restoration_druid = 37;
+		Hunter hunter = 7;
+		Mage mage = 8;
+		RetributionPaladin retribution_paladin = 9;
+		ProtectionPaladin protection_paladin = 25;
+		HolyPaladin holy_paladin = 38;
+		HealingPriest healing_priest = 34;
+		ShadowPriest shadow_priest = 10;
+		SmitePriest smite_priest = 20;
+		Rogue rogue = 11;
+		ElementalShaman elemental_shaman = 12;
+		EnhancementShaman enhancement_shaman = 18;
+		RestorationShaman restoration_shaman = 39;
+		Warlock warlock = 13;
+		Warrior warrior = 14;
+		ProtectionWarrior protection_warrior = 21;
+		Deathknight deathknight = 31;
+		TankDeathknight tank_deathknight = 32;
+	}
+
+	// Talents in wowhead format, e.g. '01102123133-12312312-'
+	string talents_string = 17;
+	Glyphs glyphs = 28;
+	Profession profession1 = 29;
+	Profession profession2 = 30;
+	Cooldowns cooldowns = 19;
+
+	APLRotation rotation = 40;
+
+	// TODO: Move most of the remaining fields into a 'MiscellaneousPlayerOptions' message.
+	// This will remove a lot of the boilerplate code in the UI for each new field.
+
+	int32 reaction_time_ms = 41;
+	int32 channel_clip_delay_ms = 42;
+	bool in_front_of_target = 23;
+	double distance_from_target = 33;
+
+	HealingModel healing_model = 27;
+
+	// Items/enchants/gems/etc to include in the database.
+	SimDatabase database = 35;
+
+	double nibelung_average_casts = 43;
+	// hack to set a proper default value
+	bool nibelung_average_casts_set = 44;
+}
+
+message Party {
+	repeated Player players = 1;
+
+	PartyBuffs buffs = 2;
+}
+
+message Raid {
+	repeated Party parties = 1; 
+
+	// The number of parties in the raid who participate in the sim, e.g.
+	// 10-man vs 25-man raids. The remaining parties are unused but can hold
+	// bench players.
+	//
+	// If this value is 0, all parties are included.
+	int32 num_active_parties = 2;
+
+	RaidBuffs buffs = 7;
+
+	// Extra debuffs provided by buff bots in this raid.
+	// This is also used for debuffs in the individual sims.
+	Debuffs debuffs = 5;
+
+	// Players who will be tanking mobs.
+	repeated UnitReference tanks = 4;
+
+	// Staggers Stormstrike casts across Enhance Shaman to maximize charge usage.
+	bool stagger_stormstrikes = 3;
+
+	// Extra fake players to add. Currently only used by healing sims.
+	int32 target_dummies = 6;
+}
+
+message SimOptions {
+	int32 iterations = 1;
+	int64 random_seed = 2;
+	bool debug = 3; // Enables debug logging.
+	bool debug_first_iteration = 6;
+	bool is_test = 5; // Only used internally.
+	bool save_all_values = 7; // Only used internally.
+	bool interactive = 8; // Enables interactive mode.
+}
+
+// The aggregated results from all uses of a particular action.
+message ActionMetrics {
+	ActionID id = 1;
+
+	// True if a melee action, false if a spell action.
+	bool is_melee = 2;
+
+	// Metrics for this action for each target.
+	// Note that some spells are untargeted, these will always have a single
+	// element in this array.
+	repeated TargetedActionMetrics targets = 3;
+}
+
+// Metrics for a specific action, when cast at a particular target.
+message TargetedActionMetrics {
+	// Raid/Target Index of the unit these metrics are targeted at.
+	int32 unit_index = 12;
+
+	// # of times this action was used by the agent.
+	int32 casts = 1;
+
+	// # of times this action hit a target. For cleave spells this can be larger than casts.
+	int32 hits = 2;
+
+	// # of times this action was a critical strike.
+	int32 crits = 3;
+
+	// # of times this action was a Miss or Resist.
+	int32 misses = 4;
+
+	// # of times this action was a Dodge.
+	int32 dodges = 5;
+
+	// # of times this action was a Parry.
+	int32 parries = 6;
+
+	// # of times this action was a Block.
+	int32 blocks = 7;
+
+	// # of times this action was a Glance.
+	int32 glances = 8;
+
+	// Total damage done to this target by this action.
+	double damage = 9;
+
+	// Total threat done to this target by this action.
+	double threat = 10;
+
+	// Total healing done to this target by this action.
+	double healing = 11;
+
+	// Total shielding done to this target by this action.
+	double shielding = 13;
+
+	// Total time spent casting this action, in milliseconds, either from hard casts, GCD, or channeling.
+	double cast_time_ms = 14;
+}
+
+message AuraMetrics {
+	ActionID id = 1;
+
+	double uptime_seconds_avg = 2;
+	double uptime_seconds_stdev = 3;
+
+	double procs_avg = 4;
+}
+
+enum ResourceType {
+	ResourceTypeNone = 0;
+	ResourceTypeMana = 1;
+	ResourceTypeEnergy = 2;
+	ResourceTypeRage = 3;
+	ResourceTypeComboPoints = 4;
+	ResourceTypeFocus = 5;
+	ResourceTypeHealth = 6;
+	ResourceTypeRunicPower = 7;
+	ResourceTypeBloodRune = 8;
+	ResourceTypeFrostRune = 9;
+	ResourceTypeUnholyRune = 10;
+	ResourceTypeDeathRune = 11;
+}
+
+message ResourceMetrics {
+	ActionID id = 1;
+
+	ResourceType type = 2;
+
+	// # of times this action was used by the agent.
+	int32 events = 3;
+
+	// Total resource gain from this action. Will be negative for spend actions.
+	double gain = 4;
+
+	// Like gain, but doesn't include gains over resource cap.
+	double actual_gain = 5;
+}
+
+message DistributionMetrics {
+	double avg     = 1;
+	double stdev   = 2;
+	double max     = 3;
+	int64 max_seed = 5;
+	double min     = 6;
+	int64 min_seed = 7;
+	map<int32, int32> hist = 4;
+	repeated double all_values = 8;
+}
+
+// All the results for a single Unit (player, target, or pet).
+message UnitMetrics {
+	string name = 9;
+	int32 unit_index = 13;
+
+	DistributionMetrics dps = 1;
+	DistributionMetrics dpasp = 16;
+	DistributionMetrics threat = 8;
+	DistributionMetrics dtps = 11;
+	DistributionMetrics tmi = 17;
+	DistributionMetrics hps = 14;
+	DistributionMetrics tto = 15; // Time To OOM, in seconds.
+
+	// average seconds spent oom per iteration
+	double seconds_oom_avg = 3; 
+
+	// Chance (0-1) representing probability of death. Used for tank sims.
+	double chance_of_death = 12;
+
+	repeated ActionMetrics actions = 5;
+	repeated AuraMetrics auras = 6;
+	repeated ResourceMetrics resources = 10;
+
+	repeated UnitMetrics pets = 7;
+}
+
+// Results for a whole raid.
+message PartyMetrics {
+	DistributionMetrics dps = 1;
+	DistributionMetrics hps = 3;
+
+	repeated UnitMetrics players = 2;
+}
+
+// Results for a whole raid.
+message RaidMetrics {
+	DistributionMetrics dps = 1;
+	DistributionMetrics hps = 3;
+
+	repeated PartyMetrics parties = 2;
+}
+
+message EncounterMetrics {
+	repeated UnitMetrics targets = 1;
+}
+
+// RPC RaidSim
+message RaidSimRequest {
+	Raid raid = 1;
+	Encounter encounter = 2;
+	SimOptions sim_options = 3;
+}
+
+// Result from running the raid sim.
+message RaidSimResult {
+	RaidMetrics raid_metrics = 1;
+	EncounterMetrics encounter_metrics = 2;
+
+	string logs = 3;
+
+	// Needed for displaying the timeline properly when the duration +/- option
+	// is used.
+	double first_iteration_duration = 4;
+	double avg_iteration_duration = 6;
+
+	string error_result = 5;
+}
+
+// RPC ComputeStats
+message ComputeStatsRequest {
+	Raid raid = 1;
+	Encounter encounter = 2;
+}
+message AuraStats {
+	ActionID id = 1;
+	int32 max_stacks = 2;
+	bool has_icd = 3;
+	bool has_exclusive_effect = 4;
+}
+message SpellStats {
+	ActionID id = 1;
+
+	bool is_castable = 2; // Whether this spell may be cast by the APL logic.
+	bool is_channeled = 7; // Whether this spell is a channeled spell (Mind Flay, Drain Soul, etc).
+	bool is_major_cooldown = 3; // Whether this spell is a major cooldown.
+	bool has_dot = 4; // Whether this spell applies a DoT effect.
+	bool has_shield = 6; // Whether this spell applies a shield effect.
+	bool prepull_only = 5; // Whether this spell may only be cast during prepull.
+	bool encounter_only = 8; // Whether this spell may only be cast during the encounter (not prepull).
+	bool has_cast_time = 9; // Whether this spell has a cast time or not.
+}
+message APLActionStats {
+	repeated string warnings = 1;
+}
+message APLStats {
+	repeated APLActionStats prepull_actions = 1;
+	repeated APLActionStats priority_list = 2;
+}
+message UnitMetadata {
+	string name = 3;
+	repeated SpellStats spells = 1;
+	repeated AuraStats auras = 2;
+}
+message PetStats {
+	UnitMetadata metadata = 1;
+}
+message PlayerStats {
+	// Stats
+	UnitStats base_stats = 6;
+	UnitStats gear_stats = 1;
+	UnitStats talents_stats = 7;
+	UnitStats buffs_stats = 8;
+	UnitStats consumes_stats = 9;
+	UnitStats final_stats = 2;
+
+	repeated string sets = 3;
+	IndividualBuffs buffs = 4;
+
+	UnitMetadata metadata = 10;
+	APLStats rotation_stats = 12;
+
+	repeated PetStats pets = 11;
+}
+message PartyStats {
+	repeated PlayerStats players = 1;
+}
+message RaidStats {
+	repeated PartyStats parties = 1;
+}
+message TargetStats {
+	UnitMetadata metadata = 1;
+}
+message EncounterStats {
+	repeated TargetStats targets = 1;
+}
+message ComputeStatsResult {
+	RaidStats raid_stats = 1;
+	EncounterStats encounter_stats = 3;
+	string error_result = 2;
+}
+
+// RPC StatWeights
+message StatWeightsRequest {
+	Player player = 1;
+	RaidBuffs raid_buffs = 2;
+	PartyBuffs party_buffs = 3;
+	Debuffs debuffs = 9;
+	Encounter encounter = 4;
+	SimOptions sim_options = 5;
+	repeated UnitReference tanks = 8;
+
+	repeated Stat stats_to_weigh = 6;
+	repeated PseudoStat pseudo_stats_to_weigh = 10;
+	Stat ep_reference_stat = 7;
+}
+message StatWeightsResult {
+	StatWeightValues dps = 1;
+	StatWeightValues hps = 4;
+	StatWeightValues tps = 2;
+	StatWeightValues dtps = 3;
+	StatWeightValues tmi = 5;
+	StatWeightValues p_death = 6;
+}
+message StatWeightValues {
+	UnitStats weights = 1;
+	UnitStats weights_stdev = 2;
+	UnitStats ep_values = 3;
+	UnitStats ep_values_stdev = 4;
+}
+
+message AsyncAPIResult {
+  string progress_id = 1;
+} 
+
+// ProgressMetrics are used by all async APIs
+message ProgressMetrics {
+	int32 completed_iterations = 1;
+	int32 total_iterations = 2;
+	int32 completed_sims = 3;
+	int32 total_sims = 4;
+	bool presim_running = 8;
+
+	// Partial Results 
+	double dps = 5;
+	double hps = 9;
+
+	// Final Results
+	RaidSimResult final_raid_result = 6; // only set when completed
+	StatWeightsResult final_weight_result = 7;
+	BulkSimResult final_bulk_result = 10;
+}
+
+// RPC: BulkSim
+message BulkSimRequest {
+    RaidSimRequest base_settings = 1;
+    BulkSettings bulk_settings = 2;
+}
+
+message TalentLoadout {
+	string talents_string = 1;
+	Glyphs glyphs = 2;
+	string name = 3;
+}
+
+message BulkSettings {
+	repeated ItemSpec items = 1;
+	bool combinations = 2;
+	bool fast_mode = 3; // Used to run with less iterations to start and slowly increase to weed out items faster.
+	// Use current enchant on the slot if not specified by the ItemSpec.
+	// Only works when replacement item is valid target for enchant.
+	bool auto_enchant = 4;
+
+	// Currently not used.
+	// Used to fill out gem slots that are not filled in the ItemSpec
+	bool auto_gem = 5;
+	int32 default_red_gem = 6;
+	int32 default_blue_gem = 7;
+	int32 default_yellow_gem = 8;
+	int32 default_meta_gem = 9;
+	bool ensure_meta_req_met = 10; // ensures that meta requirements are met when auto-gemming.
+
+	// Number of iterations per combo.
+	// If set to 0 the sim core decides the optimal iterations.
+	int32 iterations_per_combo = 11;
+	// Should sim talents as well
+	bool sim_talents = 12;
+	repeated TalentLoadout talents_to_sim = 13;
+}
+
+message BulkSimResult {
+    repeated BulkComboResult results = 1;
+		BulkComboResult equipped_gear_result = 2;
+    string error_result = 3; // only set if sim failed.
+}
+
+message BulkComboResult {
+    repeated ItemSpecWithSlot items_added = 1;
+    UnitMetrics unit_metrics = 2;
+	TalentLoadout talent_loadout = 3;
+}
+
+message ItemSpecWithSlot {
+    ItemSpec item = 1;
+    ItemSlot slot = 2;
+}

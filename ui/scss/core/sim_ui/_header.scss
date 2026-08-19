@@ -1,0 +1,127 @@
+@use "sass:map";
+@use "sass:math";
+
+.sim-header {
+	position: sticky;
+	top: -1px;
+	height: $sim-header-height;
+	padding-top: $gap-width;
+	padding-left: var(--container-padding);
+	padding-right: var(--container-padding);
+	margin-left: calc(-1 * var(--container-padding));
+	margin-right: calc(-1 * var(--container-padding));
+	white-space: nowrap;
+	transition: background-color .15s ease-in-out; 
+	z-index: $header-z-index;
+	
+	&::after {
+		content: ' ';
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		width: calc(100% - 2 * var(--container-padding));
+		height: 1px;
+		margin-left: auto;
+		margin-right: auto;
+		background-color: $border-color;
+		transition: width .15s ease-in-out;
+	}
+
+	&.stuck {
+		background: $body-bg;
+
+		&::after {
+			width: 100%;
+		}
+	}
+
+	.sim-header-container {
+		height: 100%;
+		display: flex;
+		align-items: stretch;
+		flex: 1;
+		// Horizontal scroll for smaller screens
+		// TODO: This is not a good solution
+		overflow-x: scroll;
+		-ms-overflow-style: none;  /* IE and Edge */
+		scrollbar-width: none;  /* Firefox */
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+
+	.sim-tabs, .import-export, .sim-toolbar {
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: flex-end;
+		font-weight: bold;
+	}
+
+	.sim-tabs {
+		border-bottom: 0;
+	}
+
+	.import-export {
+		.import-link, .export-link {
+			padding: $nav-link-padding-y $nav-link-padding-x;
+			font-size: $nav-link-font-size;
+			transition: $nav-link-transition;
+
+			&.show {
+				color: white;
+			}
+		}
+	}
+
+	.sim-toolbar {
+		margin-left: auto;
+		font-size: $content-font-size;
+
+		.sim-toolbar-item, .sim-toolbar-socials {
+			margin-left: map-get($spacers, 3);
+			display: flex;
+
+			a {
+				margin-top: $nav-link-padding-y;
+				margin-bottom: $nav-link-padding-y;
+			}
+		}
+
+		.sim-toolbar-item {
+			transition: $link-transition;
+
+			.known-issues {
+				color: #ef9eaa;
+			}
+		}
+
+		.sim-toolbar-socials {
+			margin-top: math.div($nav-link-padding-y, 2);
+			margin-bottom: math.div($nav-link-padding-y, 2);
+			border-left: $border-default;
+
+			a {
+				margin-top: math.div($nav-link-padding-y, 2);
+				margin-bottom: math.div($nav-link-padding-y, 2);
+			}
+		}
+	}
+
+	.sim-dropdown-menu {
+		display: flex;
+		// Needed so that dropdowns don't clip the header with overflow-x set
+		position: unset;
+
+		.dropdown-menu {
+			top: -2px;
+		}
+	}
+}
+
+@include media-breakpoint-down(lg) {
+	.sim-header {
+		padding-top: $gap-width-sm;
+	}	
+}

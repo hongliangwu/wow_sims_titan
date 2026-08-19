@@ -1,0 +1,390 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "./proto";
+
+import "api.proto";
+import "apl.proto";
+import "common.proto";
+import "paladin.proto";
+
+// Holds all WoW data for the UI.
+message UIDatabase {
+	repeated UIItem items = 1;
+	repeated UIEnchant enchants = 2;
+	repeated UIGem gems = 3;
+	repeated PresetEncounter encounters = 6;
+
+	repeated UIZone zones = 8;
+	repeated UINPC npcs = 9;
+
+	// Entities for which we just need a name/icon.
+	repeated IconData item_icons = 4;
+	repeated IconData spell_icons = 5;
+
+	repeated GlyphID glyph_ids = 7;
+}
+
+message UIZone {
+	int32 id = 1;
+	string name = 2;
+	Expansion expansion = 3;
+}
+message UINPC {
+	int32 id = 1;
+	string name = 2;
+	int32 zone_id = 3;
+}
+
+// Contains all information about an Item needed by the UI.
+// Generally this will include everything needed by the sim, plus some
+// additional data for displaying / filtering.
+// Next tag: 26.
+message UIItem {
+	int32 id = 1;
+	string name = 2;
+	string icon = 3;
+
+	ItemType type = 4;
+	ArmorType armor_type = 5;
+	WeaponType weapon_type = 6;
+	HandType hand_type = 7;
+	RangedWeaponType ranged_weapon_type = 8;
+
+	repeated double stats = 9;
+	repeated GemColor gem_sockets = 10;
+	repeated double socketBonus = 11;
+
+	// Weapon stats, needed for computing proper EP for melee weapons
+	double weapon_damage_min = 12;
+	double weapon_damage_max = 13;
+	double weapon_speed = 14;
+
+	int32 ilvl = 15;
+	int32 phase = 16;
+	ItemQuality quality = 17;
+	bool unique = 18;
+	bool heroic = 19;
+
+	// Classes that are allowed to use the item. Empty indicates no special class restrictions.
+	repeated Class class_allowlist = 20;
+	Profession required_profession = 21;
+
+	// Name of the item set to which this item belongs, if any.
+	string set_name = 22;
+
+	Expansion expansion = 24;
+	repeated UIItemSource sources = 23;
+
+	enum FactionRestriction {
+		FACTION_RESTRICTION_UNSPECIFIED = 0;
+		FACTION_RESTRICTION_ALLIANCE_ONLY = 1;
+		FACTION_RESTRICTION_HORDE_ONLY = 2;
+	}
+
+	FactionRestriction faction_restriction = 25;
+}
+
+enum Expansion {
+	ExpansionUnknown = 0;
+	ExpansionVanilla = 1;
+	ExpansionTbc = 2;
+	ExpansionWotlk = 3;
+}
+
+enum DungeonDifficulty {
+	DifficultyUnknown = 0;
+	DifficultyNormal = 1;
+	DifficultyHeroic = 2;
+	DifficultyTitanRuneAlpha = 7;
+	DifficultyTitanRuneBeta = 8;
+	DifficultyRaid10 = 3;
+	DifficultyRaid10H = 4;
+	DifficultyRaid25 = 5;
+	DifficultyRaid25H = 6;
+}
+
+enum RepLevel {
+	RepLevelUnknown 	= 0;
+	RepLevelHated 		= 1;
+	RepLevelHostile 	= 2;
+	RepLevelUnfriendly 	= 3;
+	RepLevelNeutral 	= 4;
+	RepLevelFriendly 	= 5;
+	RepLevelHonored 	= 6;
+	RepLevelRevered 	= 7;
+	RepLevelExalted 	= 8;
+}
+
+// TODO: Wotlk Rep Factions
+// Use the faction ID for the field index
+enum RepFaction {
+	RepFactionUnknown = 0;
+}
+
+message UIItemSource {
+	oneof source {
+		CraftedSource crafted = 1;
+		DropSource drop = 2;
+		QuestSource quest = 3;
+		SoldBySource sold_by = 4;
+		RepSource rep = 5;
+	}
+}
+message CraftedSource {
+	Profession profession = 1;
+	int32 spell_id = 2;
+}
+message DropSource {
+	DungeonDifficulty difficulty = 1;
+	int32 npc_id = 2;
+	int32 zone_id = 3;
+	string other_name = 4; // For drops in zones from things other than NPCs, e.g. "Trash"
+	string category = 5;   // For conditions/categories of drops, e.g. 'Hard Mode' or 'Titan Rune'
+}
+message QuestSource {
+	int32 id = 1;
+	string name = 2;
+}
+message SoldBySource {
+	int32 npc_id = 1;
+	string npc_name = 2;
+	int32 zone_id = 3;
+}
+message RepSource {
+	RepFaction rep_faction_id = 1;
+	RepLevel rep_level = 2;
+	Faction faction_id = 3;
+}
+
+message UIEnchant {
+	// All enchants have an effect ID. Some also have an item ID, others have a spell ID,
+	// and yet others have both item and spell IDs. No single ID alone is enough to
+	// uniquely identify an enchant. Uniqueness requires either effect ID + slot, or
+	// effect ID + item/spell ID.
+	int32 effect_id = 1; // ID of the effect.
+	int32 item_id = 2;   // ID of the enchant "item". Might be 0 if not available.
+	int32 spell_id = 3;  // ID of the enchant "spell". Might be 0 if not available.
+
+	string name = 4;
+	string icon = 5;
+
+	ItemType type = 6;                  // Which type of item this enchant can be applied to.
+	repeated ItemType extra_types = 13; // Extra types for enchants that can go in multiple slots (like armor kits).
+	EnchantType enchant_type = 7;
+
+	repeated double stats = 8;
+
+	ItemQuality quality = 9;
+	int32 phase = 10;
+
+	// Classes that are allowed to use the enchant. Empty indicates no special class restrictions.
+	repeated Class class_allowlist = 11;
+	Profession required_profession = 12;
+}
+
+message UIGem {
+	int32 id = 1;
+	string name = 2;
+	string icon = 3;
+	GemColor color = 4;
+
+	repeated double stats = 5;
+
+	int32 phase = 6;
+	ItemQuality quality = 7;
+	bool unique = 8;
+	Profession required_profession = 9;
+}
+
+message IconData {
+	int32 id = 1;
+	string name = 2;
+	string icon = 3;
+}
+
+message GlyphID {
+	int32 item_id = 1;
+	int32 spell_id = 2;
+}
+
+enum SourceFilterOption {
+	SourceUnknown = 0;
+	SourceCrafting = 1;
+	SourceQuest = 2;
+	SourceDungeon = 3;
+	SourceDungeonH = 4;
+	SourceDungeonTRA = 9;
+	SourceDungeonTRB = 10;
+	SourceRaid10 = 5;
+	SourceRaid10H = 6;
+	SourceRaid25 = 7;
+	SourceRaid25H = 8;
+}
+
+enum RaidFilterOption {
+	RaidUnknown = 0;
+	RaidVanilla = 1;
+	RaidTbc = 2;
+	RaidNaxxramas = 3;
+	RaidEyeOfEternity = 4;
+	RaidObsidianSanctum = 5;
+	RaidVaultOfArchavon = 6;
+	RaidUlduar = 7;
+	RaidTrialOfTheCrusader = 8;
+	RaidOnyxiasLair = 9;
+	RaidIcecrownCitadel = 10;
+	RaidRubySanctum = 11;
+}
+
+// Next tag: 20.
+message DatabaseFilters {
+	repeated ArmorType armor_types = 1;
+	repeated WeaponType weapon_types = 2;
+	repeated RangedWeaponType ranged_weapon_types = 16;
+	repeated SourceFilterOption sources = 17;
+	repeated RaidFilterOption raids = 18;
+	UIItem.FactionRestriction faction_restriction = 19;
+
+	double min_mh_weapon_speed = 4;
+	double max_mh_weapon_speed = 5;
+	double min_oh_weapon_speed = 9;
+	double max_oh_weapon_speed = 10;
+	double min_ranged_weapon_speed = 14;
+	double max_ranged_weapon_speed = 15;
+
+	bool one_handed_weapons = 6;
+	bool two_handed_weapons = 7;
+	bool matching_gems_only = 8;
+
+	// Item IDs for favorited items.
+	repeated int32 favorite_items = 11;
+	// Item IDs for favorited gems.
+	repeated int32 favorite_gems = 12;
+	// Uniquely-identifying strings for favorited enchants.
+	repeated string favorite_enchants = 13;
+}
+
+message SimSettings {
+	int32 iterations = 1;
+	int32 phase = 2;
+	int64 fixed_rng_seed = 3;
+	bool show_damage_metrics = 8;
+	bool show_threat_metrics = 4;
+	bool show_healing_metrics = 7;
+	bool show_experimental = 5;
+	bool show_ep_values = 11;
+	string language = 9;
+	Faction faction = 6;
+	DatabaseFilters filters = 10;
+}
+
+// Contains all information that is imported/exported from an individual sim.
+message IndividualSimSettings {
+	SimSettings settings = 5;
+	RaidBuffs raid_buffs = 1;
+	Debuffs debuffs = 8;
+	repeated UnitReference tanks = 7;
+	PartyBuffs party_buffs = 2;
+	Player player = 3;
+	Encounter encounter = 4;
+	int32 target_dummies = 9;
+	UnitStats ep_weights_stats = 10;
+	repeated double ep_ratios = 11;
+	Stat dps_ref_stat = 12;
+	Stat heal_ref_stat = 13;
+	Stat tank_ref_stat = 14;
+}
+
+// Local storage data for gear settings.
+message SavedGearSet {
+	EquipmentSpec gear = 1;
+	UnitStats bonus_stats_stats = 3;
+}
+
+// Local storage data for other settings.
+message SavedSettings {
+	RaidBuffs raid_buffs = 1;
+	PartyBuffs party_buffs = 2;
+	Debuffs debuffs = 7;
+	IndividualBuffs player_buffs = 3;
+	Consumes consumes = 4;
+	Race race = 5;
+	repeated Profession professions = 9;
+	bool enable_item_swap = 18;
+	ItemSwap item_swap = 17;
+
+	int32 reaction_time_ms = 10;
+	int32 channel_clip_delay_ms = 14;
+	bool in_front_of_target = 11;
+	double distance_from_target = 12;
+	HealingModel healing_model = 13;
+	double nibelung_average_casts = 15;
+	// hack to set a proper default value
+	bool nibelung_average_casts_set = 16;
+}
+
+message SavedTalents {
+	string talents_string = 1;
+	Glyphs glyphs = 2;
+}
+
+message SavedRotation {
+	APLRotation rotation = 1;
+}
+
+message BlessingsAssignment {
+	// Index corresponds to Spec that the blessing should be applied to.
+	repeated Blessings blessings = 1;
+}
+
+message BlessingsAssignments {
+	// Assignments for each paladin.
+	repeated BlessingsAssignment paladins = 1;
+}
+
+// Local storage data for a saved encounter.
+message SavedEncounter {
+	Encounter encounter = 1;
+}
+
+// Local storage data for raid sim settings.
+message SavedRaid {
+	Raid raid = 1;
+	BlessingsAssignments blessings = 3;
+	Faction faction = 4;
+	int32 phase = 5;
+}
+
+// Contains all information that is imported/exported from a raid sim.
+message RaidSimSettings {
+	SimSettings settings = 5;
+	Raid raid = 1;
+	BlessingsAssignments blessings = 3;
+	Encounter encounter = 4;
+}
+
+// All the data related to running the sim once.
+message SimRun {
+	RaidSimRequest request = 1;
+	RaidSimResult result = 2;
+}
+
+// Contains a sim run and also other context data.
+message SimRunData {
+	SimRun run = 1;
+
+	// The run stored as a reference, for comparison to the current run.
+	SimRun reference_run = 2;
+}
+
+// Sent by the sim to the detailed results page.
+message DetailedResultsUpdate {
+	oneof data {
+		// Show results from a run.
+		SimRunData run_data = 1;
+
+		// Update sim settings.
+		SimSettings settings = 2;
+	}
+}

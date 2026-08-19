@@ -1,0 +1,11 @@
+@import "./icon_picker";
+
+.input-root.icon-enum-picker-root {
+  width: unset;
+  margin-bottom: 0;
+
+  .icon-picker-button {
+    transition: none;
+    filter: none;
+  }
+}

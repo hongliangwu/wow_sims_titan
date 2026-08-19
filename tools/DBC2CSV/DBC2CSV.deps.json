@@ -1,0 +1,122 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "DBC2CSV/1.0.0": {
+        "dependencies": {
+          "DBCD": "2.0.3"
+        },
+        "runtime": {
+          "DBC2CSV.dll": {}
+        }
+      },
+      "DBCD/2.0.3": {
+        "dependencies": {
+          "DBCD.IO": "2.0.3",
+          "DBDefsLib": "1.0.0.20",
+          "Microsoft.CSharp": "4.7.0",
+          "System.Reflection.Emit": "4.7.0"
+        },
+        "runtime": {
+          "lib/net8.0/DBCD.dll": {
+            "assemblyVersion": "2.0.3.0",
+            "fileVersion": "2.0.3.0"
+          }
+        }
+      },
+      "DBCD.IO/2.0.3": {
+        "dependencies": {
+          "System.Buffers": "4.5.1",
+          "System.Memory": "4.5.5",
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/DBCD.IO.dll": {
+            "assemblyVersion": "2.0.3.0",
+            "fileVersion": "2.0.3.0"
+          }
+        }
+      },
+      "DBDefsLib/1.0.0.20": {
+        "runtime": {
+          "lib/netstandard2.0/DBDefsLib.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Microsoft.CSharp/4.7.0": {},
+      "System.Buffers/4.5.1": {},
+      "System.Memory/4.5.5": {},
+      "System.Reflection.Emit/4.7.0": {},
+      "System.Runtime.CompilerServices.Unsafe/6.0.0": {}
+    }
+  },
+  "libraries": {
+    "DBC2CSV/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "DBCD/2.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-BtlJRpCh79eLZUt1IfXkmzFinh0bfnCwu03yqdvyht3SI+WvxYPfJMSgHSP+/auERe5gM13ftoGTc+LscZ0GCA==",
+      "path": "dbcd/2.0.3",
+      "hashPath": "dbcd.2.0.3.nupkg.sha512"
+    },
+    "DBCD.IO/2.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JvfoIGroR6UW1KN+FD+XxV/nueff9AVvVL+Qz4n+uf51/5nbvqszjBfzC8KIWiWlPF+6tfVDCxdBm09GSjdDuw==",
+      "path": "dbcd.io/2.0.3",
+      "hashPath": "dbcd.io.2.0.3.nupkg.sha512"
+    },
+    "DBDefsLib/1.0.0.20": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lfO2/nQfgmBluHbNpt2axRxpmCCHh0V7yM3t7qKK4pmtlSb0+wrXV1heSa15DqUqK63hBxjQSriqXFfwhS45ww==",
+      "path": "dbdefslib/1.0.0.20",
+      "hashPath": "dbdefslib.1.0.0.20.nupkg.sha512"
+    },
+    "Microsoft.CSharp/4.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pTj+D3uJWyN3My70i2Hqo+OXixq3Os2D1nJ2x92FFo6sk8fYS1m1WLNTs0Dc1uPaViH0YvEEwvzddQ7y4rhXmA==",
+      "path": "microsoft.csharp/4.7.0",
+      "hashPath": "microsoft.csharp.4.7.0.nupkg.sha512"
+    },
+    "System.Buffers/4.5.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Rw7ijyl1qqRS0YQD/WycNst8hUUMgrMH4FCn1nNm27M4VxchZ1js3fVjQaANHO5f3sN4isvP4a+Met9Y4YomAg==",
+      "path": "system.buffers/4.5.1",
+      "hashPath": "system.buffers.4.5.1.nupkg.sha512"
+    },
+    "System.Memory/4.5.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XIWiDvKPXaTveaB7HVganDlOCRoj03l+jrwNvcge/t8vhGYKvqV+dMv6G4SAX2NoNmN0wZfVPTAlFwZcZvVOUw==",
+      "path": "system.memory/4.5.5",
+      "hashPath": "system.memory.4.5.5.nupkg.sha512"
+    },
+    "System.Reflection.Emit/4.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-VR4kk8XLKebQ4MZuKuIni/7oh+QGFmZW3qORd1GvBq/8026OpW501SzT/oypwiQl4TvT8ErnReh/NzY9u+C6wQ==",
+      "path": "system.reflection.emit/4.7.0",
+      "hashPath": "system.reflection.emit.4.7.0.nupkg.sha512"
+    },
+    "System.Runtime.CompilerServices.Unsafe/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
+      "path": "system.runtime.compilerservices.unsafe/6.0.0",
+      "hashPath": "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
+    }
+  }
+}

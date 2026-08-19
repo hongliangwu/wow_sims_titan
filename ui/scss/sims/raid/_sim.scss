@@ -1,0 +1,9 @@
+// Set color variables which control the site theme.
+.raid-sim-ui {
+	@include theme-color(
+		$brand,
+		.9,
+		// '/wotlk/assets/img/ulduar.jpg'
+		'/wotlk/assets/img/togc.png'
+	);
+}

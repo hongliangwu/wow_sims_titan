@@ -1,0 +1,42 @@
+# local environment (proxy, secrets)
+.env
+
+# nodejs modules
+node_modules
+ui/core/index.ts
+ui/*/index.html
+.dirstamp
+
+# IDE folders
+.idea
+.history
+
+# binaries
+dist
+binary_dist
+sim/web/__debug_bin
+/wowsimwotlkcli*
+/wowsimwotlk*
+
+# temporary files
+*.results.tmp
+.dockerignore
+/wotlk/
+*.code-workspace
+wowsimwotlk
+
+# old result file
+TestAPL.results
+
+#macos
+.DS_Store
+
+# air tmp dir
+tmp/
+
+# lib
+wowsimwotlk*.so
+wowsimwotlk*.dll
+wowsimwotlk*.h
+
+*.log
