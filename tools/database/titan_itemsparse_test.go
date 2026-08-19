@@ -139,17 +139,54 @@ func TestFormatSpellDescription(t *testing.T) {
 		1262346: {1000},
 		1262095: {50},
 	}
-	got := formatSpellDescription("你的十字军打击所造成的伤害提高$s1%。", 1262348, points)
+	got := formatSpellDescription("你的十字军打击所造成的伤害提高$s1%。", 1262348, points, nil)
 	if got != "你的十字军打击所造成的伤害提高6%。" {
 		t.Errorf("2pc: %q", got)
 	}
-	got = formatSpellDescription("你的神圣风暴技能的冷却时间缩短$/1000;s1秒。", 1262346, points)
+	got = formatSpellDescription("你的神圣风暴技能的冷却时间缩短$/1000;s1秒。", 1262346, points, nil)
 	if got != "你的神圣风暴技能的冷却时间缩短1秒。" {
 		t.Errorf("4pc: %q", got)
 	}
-	got = formatSpellDescription("你的寒冬号角在使用时额外产生$/10;1262095s1点符文能量。", 1262093, points)
+	got = formatSpellDescription("你的寒冬号角在使用时额外产生$/10;1262095s1点符文能量。", 1262093, points, nil)
 	if got != "你的寒冬号角在使用时额外产生5点符文能量。" {
 		t.Errorf("other-spell: %q", got)
+	}
+}
+
+func TestTitanTrinketEffects(t *testing.T) {
+	items, err := LoadTitanItemSparse(
+		"../../assets/database/dbfilesclient/ItemSparse.csv",
+		"../../assets/database/dbfilesclient/Item.csv",
+		"../../assets/db_inputs/titan_icon_names.csv",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := make([]int32, 0, len(items))
+	for _, it := range items {
+		ids = append(ids, it.Id)
+	}
+	effects, err := ExportTitanItemEffects("../../assets/database/dbfilesclient", ids)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := effects[47080]
+	if len(lines) == 0 {
+		t.Fatal("missing effects for 47080 萨崔娜的抗阻甲虫")
+	}
+	if !strings.Contains(lines[0], "使用：") || !strings.Contains(lines[0], "生命值") {
+		t.Errorf("normal use effect=%q", lines[0])
+	}
+	heroic := effects[47088]
+	if len(heroic) == 0 {
+		t.Fatal("missing effects for 47088 heroic scarab")
+	}
+	if lines[0] == heroic[0] {
+		t.Fatalf("normal and heroic use effects should differ: %q", lines[0])
+	}
+	verdict := effects[47115]
+	if len(verdict) == 0 || !strings.Contains(verdict[0], "装备：") || !strings.Contains(verdict[0], "力量或敏捷") {
+		t.Errorf("death's verdict=%v", verdict)
 	}
 }
 

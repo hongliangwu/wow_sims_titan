@@ -183,8 +183,13 @@ func mergeTitanItemSparse(db *database.WowDatabase, dbDir string) {
 		log.Printf("Titan item sets not exported: %v", err)
 		return
 	}
+	effects, err := database.ExportTitanItemEffects(fmt.Sprintf("%s/dbfilesclient", dbDir), itemIDs)
+	if err != nil {
+		log.Printf("Titan item effects not exported: %v", err)
+		effects = map[int32][]string{}
+	}
 	outSets := fmt.Sprintf("%s/titan_sets.json", dbDir)
-	if err := database.WriteTitanSetsJSON(outSets, sets, itemIDs); err != nil {
+	if err := database.WriteTitanSetsJSON(outSets, sets, itemIDs, effects); err != nil {
 		log.Printf("Failed writing %s: %v", outSets, err)
 		return
 	}
@@ -192,7 +197,7 @@ func mergeTitanItemSparse(db *database.WowDatabase, dbDir string) {
 	for _, s := range sets {
 		nBonus += len(s.Bonuses)
 	}
-	log.Printf("Wrote %d Titan item sets (%d bonuses) to %s", len(sets), nBonus, outSets)
+	log.Printf("Wrote %d Titan item sets (%d bonuses) and %d item effects to %s", len(sets), nBonus, len(effects), outSets)
 }
 
 // Filters out entities which shouldn't be included anywhere.

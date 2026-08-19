@@ -42,7 +42,10 @@ type itemSetCatalog struct {
 var (
 	reSlashOtherSpell = regexp.MustCompile(`\$/(\d+);(\d+)s(\d+)`)
 	reSlashSameSpell  = regexp.MustCompile(`\$/(\d+);s(\d+)`)
+	reOtherSPoint     = regexp.MustCompile(`\$(\d+)s(\d+)`)
+	reOtherDuration   = regexp.MustCompile(`\$(\d+)d`)
 	reSPoint          = regexp.MustCompile(`\$s(\d+)`)
+	reDuration        = regexp.MustCompile(`\$d`)
 )
 
 func loadItemSetCatalog(dir string) (*itemSetCatalog, error) {
@@ -66,7 +69,8 @@ func loadItemSetCatalog(dir string) (*itemSetCatalog, error) {
 	if err != nil {
 		return cat, nil
 	}
-	if err := loadItemSetSpells(bonusPath, cat, descs, points); err != nil {
+	durations := loadSpellDurations(dir)
+	if err := loadItemSetSpells(bonusPath, cat, descs, points, durations); err != nil {
 		return cat, nil
 	}
 	return cat, nil
@@ -119,7 +123,7 @@ func loadItemSetNames(path string, cat *itemSetCatalog) error {
 	return nil
 }
 
-func loadItemSetSpells(path string, cat *itemSetCatalog, descs map[int32]string, points map[int32][]int32) error {
+func loadItemSetSpells(path string, cat *itemSetCatalog, descs map[int32]string, points map[int32][]int32, durations map[int32]int32) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -148,7 +152,7 @@ func loadItemSetSpells(path string, cat *itemSetCatalog, descs map[int32]string,
 			continue
 		}
 		raw := descs[spellID]
-		text := formatSpellDescription(raw, spellID, points)
+		text := formatSpellDescription(raw, spellID, points, durations)
 		if text == "" {
 			continue
 		}
@@ -263,7 +267,7 @@ func spellEffectPoints(basePoints, dieSides int32) int32 {
 	return v
 }
 
-func formatSpellDescription(desc string, spellID int32, points map[int32][]int32) string {
+func formatSpellDescription(desc string, spellID int32, points map[int32][]int32, durations map[int32]int32) string {
 	if desc == "" {
 		return ""
 	}
@@ -288,13 +292,107 @@ func formatSpellDescription(desc string, spellID int32, points map[int32][]int32
 		}
 		return m
 	})
+	desc = reOtherSPoint.ReplaceAllStringFunc(desc, func(m string) string {
+		sub := reOtherSPoint.FindStringSubmatch(m)
+		otherID, _ := strconv.Atoi(sub[1])
+		idx, _ := strconv.Atoi(sub[2])
+		return strconv.Itoa(int(spellPointValue(points, int32(otherID), idx)))
+	})
+	desc = reOtherDuration.ReplaceAllStringFunc(desc, func(m string) string {
+		sub := reOtherDuration.FindStringSubmatch(m)
+		otherID, _ := strconv.Atoi(sub[1])
+		if text := formatDurationMS(durations[int32(otherID)]); text != "" {
+			return text
+		}
+		return m
+	})
 	desc = reSPoint.ReplaceAllStringFunc(desc, func(m string) string {
 		sub := reSPoint.FindStringSubmatch(m)
 		idx, _ := strconv.Atoi(sub[1])
 		v := spellPointValue(points, spellID, idx)
 		return strconv.Itoa(int(v))
 	})
+	desc = reDuration.ReplaceAllStringFunc(desc, func(m string) string {
+		if text := formatDurationMS(durations[spellID]); text != "" {
+			return text
+		}
+		return m
+	})
 	return strings.TrimSpace(desc)
+}
+
+func formatDurationMS(ms int32) string {
+	if ms <= 0 {
+		return ""
+	}
+	if ms%60000 == 0 {
+		return fmt.Sprintf("%d分钟", ms/60000)
+	}
+	if ms%1000 == 0 {
+		return fmt.Sprintf("%d秒", ms/1000)
+	}
+	return fmt.Sprintf("%.1f秒", float64(ms)/1000)
+}
+
+func loadSpellDurations(dir string) map[int32]int32 {
+	out := map[int32]int32{}
+	durByIndex := map[int32]int32{}
+	durPath := filepath.Join(dir, "SpellDuration.csv")
+	if err := loadCSVFile(durPath, func(rec []string, col map[string]int) {
+		id := csvInt(rec, col, "ID")
+		if id == 0 {
+			return
+		}
+		dur := csvInt(rec, col, "Duration")
+		max := csvInt(rec, col, "MaxDuration")
+		if max > 0 && (dur <= 0 || dur > max*10) {
+			dur = max
+		}
+		if dur > 0 {
+			durByIndex[id] = dur
+		}
+	}); err != nil {
+		return out
+	}
+	miscPath := filepath.Join(dir, "SpellMisc.csv")
+	_ = loadCSVFile(miscPath, func(rec []string, col map[string]int) {
+		spellID := csvInt(rec, col, "SpellID")
+		idx := csvInt(rec, col, "DurationIndex")
+		if spellID == 0 || idx == 0 {
+			return
+		}
+		if ms := durByIndex[idx]; ms > 0 {
+			out[spellID] = ms
+		}
+	})
+	return out
+}
+
+func loadCSVFile(path string, each func(rec []string, col map[string]int)) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	r := csv.NewReader(f)
+	r.FieldsPerRecord = -1
+	r.LazyQuotes = true
+	header, err := r.Read()
+	if err != nil {
+		return err
+	}
+	col := csvHeader(header)
+	for {
+		rec, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		each(rec, col)
+	}
+	return nil
 }
 
 func spellPointValue(points map[int32][]int32, spellID int32, oneBased int) int32 {
@@ -383,14 +481,22 @@ func buildTitanItemSets(cat *itemSetCatalog, items []*proto.UIItem) []TitanItemS
 
 // TitanSetsPayload is written to titan_sets.json for the local tooltip and item picker.
 type TitanSetsPayload struct {
-	ItemIDs []int32        `json:"itemIds"`
-	Sets    []TitanItemSet `json:"sets"`
+	ItemIDs []int32             `json:"itemIds"`
+	Sets    []TitanItemSet      `json:"sets"`
+	Effects map[string][]string `json:"effects"`
 }
 
-func WriteTitanSetsJSON(path string, sets []TitanItemSet, itemIDs []int32) error {
+func WriteTitanSetsJSON(path string, sets []TitanItemSet, itemIDs []int32, effects map[int32][]string) error {
 	ids := append([]int32(nil), itemIDs...)
 	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
-	data, err := json.MarshalIndent(TitanSetsPayload{ItemIDs: ids, Sets: sets}, "", "  ")
+	keyed := map[string][]string{}
+	for id, lines := range effects {
+		if len(lines) == 0 {
+			continue
+		}
+		keyed[strconv.FormatInt(int64(id), 10)] = lines
+	}
+	data, err := json.MarshalIndent(TitanSetsPayload{ItemIDs: ids, Sets: sets, Effects: keyed}, "", "  ")
 	if err != nil {
 		return err
 	}

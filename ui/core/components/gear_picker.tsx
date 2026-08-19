@@ -10,7 +10,7 @@ import { Class, GemColor, ItemQuality, ItemSlot, ItemSpec, ItemType } from '../p
 import { DatabaseFilters, RepFaction, UIEnchant as Enchant, UIGem as Gem, UIItem as Item, UIItem_FactionRestriction } from '../proto/ui.js';
 import { ActionId } from '../proto_utils/action_id';
 import { t } from '../i18n.js';
-import { attachLocalItemTooltip, clearLocalItemTooltip, isTitanCustomItemId, titanOriginLabel } from '../proto_utils/item_tooltip';
+import { attachLocalItemTooltip, clearLocalItemTooltip, isTitanCustomItemId, titanDuplicateKey, titanOriginLabel } from '../proto_utils/item_tooltip';
 import { getEnchantDescription, getUniqueEnchantString } from '../proto_utils/enchants';
 import { EquippedItem } from '../proto_utils/equipped_item';
 import { gemMatchesSocket, getEmptyGemSocketIconUrl } from '../proto_utils/gems';
@@ -1060,7 +1060,10 @@ export class ItemList<T> {
 			const listItemData = this.itemData[i];
 
 			if (this.label == 'Items') {
-				if (!isTitanCustomItemId(listItemData.id) || listItemData.phase > this.player.sim.getTitanPhase()) {
+				if (!isTitanCustomItemId(listItemData.id) || listItemData.phase != this.player.sim.getTitanPhase()) {
+					return false;
+				}
+				if (listItemData.heroic) {
 					return false;
 				}
 			}
@@ -1084,6 +1087,30 @@ export class ItemList<T> {
 
 			return true;
 		});
+
+		if (this.label == 'Items') {
+			const preferred = new Map<string, number>();
+			for (const i of itemIdxs) {
+				const item = this.itemData[i].item as unknown as Item;
+				const fp = titanDuplicateKey(item);
+				const cur = preferred.get(fp);
+				if (cur === undefined) {
+					preferred.set(fp, i);
+					continue;
+				}
+				const a = this.itemData[i];
+				const b = this.itemData[cur];
+				if (a.heroic !== b.heroic) {
+					if (!a.heroic) {
+						preferred.set(fp, i);
+					}
+				} else if (a.id < b.id) {
+					preferred.set(fp, i);
+				}
+			}
+			const keep = new Set(preferred.values());
+			itemIdxs = itemIdxs.filter(i => keep.has(i));
+		}
 
 		let sortFn: (itemA: T, itemB: T) => number;
 		if (this.slot == ItemSlot.ItemSlotTrinket1 || this.slot == ItemSlot.ItemSlotTrinket2) {

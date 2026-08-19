@@ -262,6 +262,7 @@ export interface TitanItemSetInfo {
 
 const titanSetsByName = new Map<string, TitanItemSetInfo>();
 const titanItemIds = new Set<number>();
+const titanItemEffects = new Map<number, string[]>();
 
 export function registerTitanItemSets(sets: TitanItemSetInfo[] | undefined | null) {
 	titanSetsByName.clear();
@@ -279,6 +280,26 @@ export function registerTitanItemIds(ids: number[] | undefined | null) {
 			titanItemIds.add(id);
 		}
 	}
+}
+
+export function registerTitanItemEffects(effects: Record<string, string[]> | undefined | null) {
+	titanItemEffects.clear();
+	for (const [id, lines] of Object.entries(effects || {})) {
+		const n = Number(id);
+		if (n && lines?.length) {
+			titanItemEffects.set(n, lines);
+		}
+	}
+}
+
+export function titanItemEffectLines(id: number): string[] {
+	return titanItemEffects.get(id) || [];
+}
+
+export function titanDuplicateKey(item: Item): string {
+	const stats = (item.stats || []).map(v => Math.round(v || 0)).join(',');
+	const effects = titanItemEffectLines(item.id).join('|');
+	return `${item.name}|${item.ilvl}|${stats}|${effects}|${item.factionRestriction || 0}`;
 }
 
 export function isTitanCustomItemId(id: number): boolean {
@@ -320,6 +341,7 @@ export function buildItemTooltipHtml(item: Item, equippedIds: number[] = []): st
 	rows.push(
 		`<div class="titan-tt-head">` +
 			`<div class="titan-tt-name" style="color:${color}">${escapeHtml(item.name)}</div>` +
+			(item.heroic ? `<div class="titan-tt-badge">[H]</div>` : '') +
 			(origin ? `<div class="titan-tt-badge">[${escapeHtml(origin)}]</div>` : '') +
 		`</div>`,
 	);
@@ -381,6 +403,9 @@ export function buildItemTooltipHtml(item: Item, equippedIds: number[] = []): st
 	}
 	for (const line of equipStatLines(item.stats)) {
 		rows.push(`<div class="titan-tt-green">${formatEquipLine(line)}</div>`);
+	}
+	for (const line of titanItemEffectLines(item.id)) {
+		rows.push(`<div class="titan-tt-green">${escapeHtml(line)}</div>`);
 	}
 	if (item.setName) {
 		rows.push(renderSetBlock(item, equippedIds));

@@ -29,7 +29,7 @@ import { Gear, ItemSwapGear } from './gear.js';
 import { CHARACTER_LEVEL } from '../constants/mechanics.js';
 import { getLanguageCode, getWowheadLocaleId } from '../constants/lang.js';
 import { distinct } from '../utils.js';
-import { registerTitanItemIds, registerTitanItemSets } from './item_tooltip.js';
+import { registerTitanItemEffects, registerTitanItemIds, registerTitanItemSets } from './item_tooltip.js';
 
 const dbUrlJson = '/wotlk/assets/database/db.json';
 const dbUrlBin = '/wotlk/assets/database/db.bin';
@@ -50,8 +50,10 @@ export class Database {
 				]).then(([json, titanCatalog]) => {
 					const sets = Array.isArray(titanCatalog) ? titanCatalog : titanCatalog?.sets;
 					const itemIds = Array.isArray(titanCatalog) ? [] : titanCatalog?.itemIds;
+					const effects = Array.isArray(titanCatalog) ? undefined : titanCatalog?.effects;
 					registerTitanItemSets(sets);
 					registerTitanItemIds(itemIds);
+					registerTitanItemEffects(effects);
 					return new Database(UIDatabase.fromJson(json));
 				});
 			} else {
