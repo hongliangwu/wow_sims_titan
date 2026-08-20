@@ -99,7 +99,7 @@ func main() {
 	}
 
 	db.MergeItems(database.ItemOverrides)
-	mergeTitanItemSparse(db, dbDir)
+	mergeTitanItemSparse(db, atlaslootDB, dbDir)
 	db.MergeGems(database.GemOverrides)
 	db.MergeEnchants(database.EnchantOverrides)
 	ApplyGlobalFilters(db)
@@ -151,10 +151,14 @@ func main() {
 	db.MergeZones(atlasDBProto.Zones)
 	db.MergeNpcs(atlasDBProto.Npcs)
 
+	overlayTitanDisplayNames(db, dbDir)
+	if n := database.DropTitanLowerIlvlDuplicates(db); n > 0 {
+		log.Printf("Dropped %d Titan leftover lower-ilvl duplicates", n)
+	}
 	db.WriteBinaryAndJson(fmt.Sprintf("%s/db.bin", dbDir), fmt.Sprintf("%s/db.json", dbDir))
 }
 
-func mergeTitanItemSparse(db *database.WowDatabase, dbDir string) {
+func mergeTitanItemSparse(db *database.WowDatabase, atlaslootDB *database.WowDatabase, dbDir string) {
 	sparsePath := fmt.Sprintf("%s/dbfilesclient/ItemSparse.csv", dbDir)
 	itemPath := fmt.Sprintf("%s/dbfilesclient/Item.csv", dbDir)
 	iconMapPath := fmt.Sprintf("%s/../db_inputs/titan_icon_names.csv", dbDir)
@@ -165,18 +169,24 @@ func mergeTitanItemSparse(db *database.WowDatabase, dbDir string) {
 	}
 
 	replaced := 0
+	phasedFromDrop := 0
 	itemIDs := make([]int32, 0, len(items))
 	for _, item := range items {
-		if existing, ok := db.Items[item.Id]; ok {
+		existing, ok := db.Items[item.Id]
+		if ok {
 			replaced++
 			if item.Icon == "" && existing.Icon != "" {
 				item.Icon = existing.Icon
 			}
 		}
+		database.ApplyTitanDropPhase(item, existing, atlaslootDB)
+		if database.TitanPhaseFromSources(item.Sources) != 0 {
+			phasedFromDrop++
+		}
 		db.Items[item.Id] = item
 		itemIDs = append(itemIDs, item.Id)
 	}
-	log.Printf("Imported %d Titan items from ItemSparse (%d replaced existing entries)", len(items), replaced)
+	log.Printf("Imported %d Titan items from ItemSparse (%d replaced existing entries, %d phased from drop sources)", len(items), replaced, phasedFromDrop)
 
 	sets, err := database.ExportTitanSets(fmt.Sprintf("%s/dbfilesclient", dbDir), items)
 	if err != nil {
@@ -198,6 +208,28 @@ func mergeTitanItemSparse(db *database.WowDatabase, dbDir string) {
 		nBonus += len(s.Bonuses)
 	}
 	log.Printf("Wrote %d Titan item sets (%d bonuses) and %d item effects to %s", len(sets), nBonus, len(effects), outSets)
+}
+
+func overlayTitanDisplayNames(db *database.WowDatabase, dbDir string) {
+	names, err := database.LoadTitanDisplayNames(fmt.Sprintf("%s/dbfilesclient/ItemSparse.csv", dbDir))
+	if err != nil {
+		log.Printf("Skipping Titan display-name overlay: %v", err)
+		return
+	}
+	nGems, nItems := 0, 0
+	for _, gem := range db.Gems {
+		if n, ok := names[gem.Id]; ok && n != "" && gem.Name != n {
+			gem.Name = n
+			nGems++
+		}
+	}
+	for _, item := range db.Items {
+		if n, ok := names[item.Id]; ok && n != "" && item.Name != n {
+			item.Name = n
+			nItems++
+		}
+	}
+	log.Printf("Overlaid Titan zhCN names on %d gems and %d items", nGems, nItems)
 }
 
 // Filters out entities which shouldn't be included anywhere.
@@ -361,6 +393,12 @@ func simmableGemFilter(_ int32, gem *proto.UIGem) bool {
 
 	// Arbitrary to filter out old gems
 	if gem.Id < 39900 {
+		return false
+	}
+
+	// Titan Time has not unlocked P3 epic cuts (Cardinal Ruby, Ametrine, etc.).
+	// Keep JC unique Dragon's Eye gems.
+	if gem.Quality >= proto.ItemQuality_ItemQualityEpic && gem.RequiredProfession != proto.Profession_Jewelcrafting {
 		return false
 	}
 
@@ -585,7 +623,7 @@ func GetAllRotationSpellIds() map[string][]int32 {
 			Class:         proto.Class_ClassPaladin,
 			Race:          proto.Race_RaceBloodElf,
 			Equipment:     &proto.EquipmentSpec{},
-			TalentsString: "050501-05-05232051203331302133231331",
+			TalentsString: "050501-05-0523205120333130211323113311",
 		}, &proto.Player_RetributionPaladin{RetributionPaladin: &proto.RetributionPaladin{Options: &proto.RetributionPaladin_Options{}}}), nil, nil, nil)},
 		{Name: "warlock", Raid: core.SinglePlayerRaidProto(core.WithSpec(&proto.Player{
 			Class:         proto.Class_ClassWarlock,

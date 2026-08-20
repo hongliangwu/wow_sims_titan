@@ -23,7 +23,7 @@ import {
 	getEligibleEnchantSlots,
 	getEligibleItemSlots,
 } from './utils.js';
-import { gemEligibleForSocket, gemMatchesSocket } from './gems.js';
+import { gemEligibleForSocket, gemMatchesSocket, isEpicQualityGem } from './gems.js';
 import { EquippedItem } from './equipped_item.js';
 import { Gear, ItemSwapGear } from './gear.js';
 import { CHARACTER_LEVEL } from '../constants/mechanics.js';
@@ -39,6 +39,19 @@ const titanSetsUrlJson = '/wotlk/assets/database/titan_sets.json';
 // When changing this value, don't forget to change the html <link> for preloading!
 const READ_JSON = true;
 
+const titanSpellIconData: Record<number, { id: number, name: string, icon: string }> = {
+	1299093: { id: 1299093, name: '圣光裁决', icon: 'ability_paladin_judgementred' },
+	1299096: { id: 1299096, name: '强化圣光裁决', icon: 'spell_holy_holyguidance' },
+	1298728: { id: 1298728, name: '祈求圣光', icon: 'spell_holy_holybolt' },
+	1298723: { id: 1298723, name: '圣光裁决', icon: 'ability_paladin_judgementred' },
+	1298724: { id: 1298724, name: '祈求圣光', icon: 'spell_holy_holybolt' },
+	1298725: { id: 1298725, name: '虔诚', icon: 'spell_holy_holybolt' },
+	1299090: { id: 1299090, name: '正义', icon: 'spell_holy_righteousnessaura' },
+	1299075: { id: 1299075, name: '圣光之怒', icon: 'spell_holy_searinglight' },
+	1299086: { id: 1299086, name: '无法祈求圣光', icon: 'spell_holy_removekurse' },
+};
+
+
 export class Database {
 	private static loadPromise: Promise<Database> | null = null;
 	static get(): Promise<Database> {
@@ -51,7 +64,7 @@ export class Database {
 					const sets = Array.isArray(titanCatalog) ? titanCatalog : titanCatalog?.sets;
 					const itemIds = Array.isArray(titanCatalog) ? [] : titanCatalog?.itemIds;
 					const effects = Array.isArray(titanCatalog) ? undefined : titanCatalog?.effects;
-					registerTitanItemSets(sets);
+					registerTitanItemSets(sets, json.items);
 					registerTitanItemIds(itemIds);
 					registerTitanItemEffects(effects);
 					return new Database(UIDatabase.fromJson(json));
@@ -158,12 +171,13 @@ export class Database {
 	}
 
 	getGems(socketColor?: GemColor): Array<Gem> {
-		if (!socketColor) 
-			return Array.from(this.gems.values());
+		const selectable = (g: Gem) => !isEpicQualityGem(g);
+		if (!socketColor)
+			return Array.from(this.gems.values()).filter(selectable);
 
 		let ret = new Array();
 		for (let g of this.gems.values()){
-			if (gemEligibleForSocket(g, socketColor))
+			if (selectable(g) && gemEligibleForSocket(g, socketColor))
 				ret.push(g);
 		}
 		return ret;
@@ -179,7 +193,7 @@ export class Database {
 	getMatchingGems(socketColor: GemColor): Array<Gem> {
 		let ret = new Array();
 		for (let g of this.gems.values()){
-			if (gemMatchesSocket(g, socketColor))
+			if (!isEpicQualityGem(g) && gemMatchesSocket(g, socketColor))
 				ret.push(g);
 		}
 		return ret;
@@ -291,6 +305,10 @@ export class Database {
 	}
 
 	static async getSpellIconData(spellId: number): Promise<IconData> {
+		const titanSpell = titanSpellIconData[spellId];
+		if (titanSpell) {
+			return IconData.create(titanSpell);
+		}
 		const db = await Database.get();
 		const lang = getLanguageCode();
 		if (lang) {

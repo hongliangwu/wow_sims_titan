@@ -21,8 +21,8 @@ const (
 	itemFlagUniqueEquippable = 0x80000
 )
 
-// titanPhaseFromIlvl maps Titan Time item level to content phase 1–11.
-// ItemSparse has no phase field; bands follow community ilvl breakpoints.
+// titanPhaseFromIlvl is the fallback when AtlasLoot has no mapped drop source
+// (embers, world drops, unlisted loot). Raid/dungeon items use TitanPhaseFromSources.
 func titanPhaseFromIlvl(ilvl int32) int32 {
 	switch {
 	case ilvl <= 213:
@@ -174,25 +174,27 @@ func LoadTitanItemSparse(sparsePath, itemPath, iconMapPath string) ([]*proto.UII
 
 		flags0 := csvInt(rec, col, "Flags[0]")
 		ui := &proto.UIItem{
-			Id:                 id,
-			Name:               name,
-			Icon:               iconNames[classInfo.iconFileDataID],
-			Type:               itemType,
-			ArmorType:          armorType,
-			WeaponType:         weaponType,
-			HandType:           handType,
-			RangedWeaponType:   rangedType,
-			Stats:              st.ToFloatArray(),
-			GemSockets:         gemSockets,
-			SocketBonus:        socketBonus.ToFloatArray(),
-			WeaponDamageMin:    minDmg,
-			WeaponDamageMax:    maxDmg,
-			WeaponSpeed:        speed,
-			Ilvl:               ilvl,
-			Phase:              titanPhaseFromIlvl(ilvl),
-			Quality:            quality,
-			Unique:             csvInt(rec, col, "MaxCount") == 1 || flags0&itemFlagUniqueEquippable != 0,
-			Heroic:             flags0&0x8 != 0,
+			Id:               id,
+			Name:             name,
+			Icon:             iconNames[classInfo.iconFileDataID],
+			Type:             itemType,
+			ArmorType:        armorType,
+			WeaponType:       weaponType,
+			HandType:         handType,
+			RangedWeaponType: rangedType,
+			Stats:            st.ToFloatArray(),
+			GemSockets:       gemSockets,
+			SocketBonus:      socketBonus.ToFloatArray(),
+			WeaponDamageMin:  minDmg,
+			WeaponDamageMax:  maxDmg,
+			WeaponSpeed:      speed,
+			Ilvl:             ilvl,
+			Phase:            titanPhaseFromIlvl(ilvl),
+			Quality:          quality,
+			Unique:           csvInt(rec, col, "MaxCount") == 1 || flags0&itemFlagUniqueEquippable != 0,
+			// Titan Time raids do not use heroic difficulty; the DBC heroic bit
+			// still appears on remapped loot and would show a leftover [H] badge.
+			Heroic:             false,
 			ClassAllowlist:     classMaskToAllowlist(csvInt(rec, col, "AllowableClass")),
 			RequiredProfession: skillToProfession(csvInt(rec, col, "RequiredSkill")),
 			Expansion:          proto.Expansion_ExpansionWotlk,
@@ -226,6 +228,103 @@ func LoadTitanItemSparse(sparsePath, itemPath, iconMapPath string) ([]*proto.UII
 		log.Printf("Titan ItemSparse: %d socket-bonus enchant IDs have no stat map (first: %v)", len(unknownSocketBonus), unknownSocketBonus)
 	}
 	return out, nil
+}
+
+// LoadTitanDisplayNames maps ItemSparse ID → zhCN Display_lang for overlaying
+// names onto gems (and leftover English items) that are not re-imported as gear.
+func LoadTitanDisplayNames(sparsePath string) (map[int32]string, error) {
+	f, err := os.Open(sparsePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	r := csv.NewReader(f)
+	r.FieldsPerRecord = -1
+	r.LazyQuotes = true
+
+	header, err := r.Read()
+	if err != nil {
+		return nil, fmt.Errorf("read ItemSparse header: %w", err)
+	}
+	col := map[string]int{}
+	for i, name := range header {
+		col[name] = i
+	}
+	if _, ok := col["ID"]; !ok {
+		return nil, fmt.Errorf("ItemSparse.csv missing column ID")
+	}
+	if _, ok := col["Display_lang"]; !ok {
+		return nil, fmt.Errorf("ItemSparse.csv missing column Display_lang")
+	}
+
+	out := map[int32]string{}
+	for {
+		rec, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read ItemSparse row: %w", err)
+		}
+		id := csvInt(rec, col, "ID")
+		name := csvStr(rec, col, "Display_lang")
+		if id == 0 || name == "" || titanSkipItemName(name) {
+			continue
+		}
+		out[id] = name
+	}
+	return out, nil
+}
+
+type titanDedupeKey struct {
+	name  string
+	typ   proto.ItemType
+	hand  proto.HandType
+	fact  proto.UIItem_FactionRestriction
+	phase int32
+}
+
+// DropTitanLowerIlvlDuplicates removes leftover difficulty variants that share a
+// name/slot/faction/phase with a higher-ilvl counterpart (e.g. ToC 死亡的裁决
+// 232 vs 238). Same-ilvl copies are kept.
+func DropTitanLowerIlvlDuplicates(db *WowDatabase) int {
+	if db == nil {
+		return 0
+	}
+	groups := map[titanDedupeKey][]*proto.UIItem{}
+	for _, item := range db.Items {
+		if item == nil || item.Name == "" {
+			continue
+		}
+		k := titanDedupeKey{
+			name:  item.Name,
+			typ:   item.Type,
+			hand:  item.HandType,
+			fact:  item.FactionRestriction,
+			phase: item.Phase,
+		}
+		groups[k] = append(groups[k], item)
+	}
+	dropped := 0
+	for _, items := range groups {
+		if len(items) < 2 {
+			continue
+		}
+		var maxIlvl int32
+		for _, item := range items {
+			if item.Ilvl > maxIlvl {
+				maxIlvl = item.Ilvl
+			}
+		}
+		for _, item := range items {
+			if item.Ilvl < maxIlvl {
+				delete(db.Items, item.Id)
+				dropped++
+			}
+		}
+	}
+	return dropped
 }
 
 func titanSkipItemName(name string) bool {

@@ -65,7 +65,7 @@ export class CharacterStats extends Component {
 			<tr
 				className='character-stats-table-row'
 			>
-				<td className="character-stats-table-label">Melee Crit Cap</td>
+				<td className="character-stats-table-label">{t('Melee Crit Cap')}</td>
 				<td className="character-stats-table-value"></td>
 			</tr>);
 
@@ -406,10 +406,10 @@ export class CharacterStats extends Component {
 		const playerCritCapDelta = player.getMeleeCritCap();
 
 		if(playerCritCapDelta === 0.0) {
-			return 'Exact';
+			return t('Exact');
 		}
 
-		const prefix = playerCritCapDelta > 0 ? 'Over by ' : 'Under by ';
+		const prefix = playerCritCapDelta > 0 ? t('Over by') : t('Under by');
 		return `${prefix} ${Math.abs(playerCritCapDelta).toFixed(2)}%`;
 	}
 }

@@ -240,3 +240,111 @@ func TestTitanLawbringerSet(t *testing.T) {
 		t.Errorf("4pc=%+v", set.Bonuses[1])
 	}
 }
+
+func TestTuralyonBattlegearSetMatchesTriumphantVariant(t *testing.T) {
+	items, err := LoadTitanItemSparse(
+		"../../assets/database/dbfilesclient/ItemSparse.csv",
+		"../../assets/database/dbfilesclient/Item.csv",
+		"../../assets/db_inputs/titan_icon_names.csv",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var triumphant, canonical *proto.UIItem
+	for _, it := range items {
+		if it.Id == 48614 {
+			triumphant = it
+		}
+		if it.Id == 48917 {
+			canonical = it
+		}
+	}
+	if triumphant == nil {
+		t.Fatal("missing 48614 图拉扬的凯旋头盔")
+	}
+	if canonical == nil {
+		t.Fatal("missing 48917 图拉扬的头盔")
+	}
+	if triumphant.SetName != "图拉扬的战甲" || canonical.SetName != triumphant.SetName {
+		t.Fatalf("set names triumphant=%q canonical=%q", triumphant.SetName, canonical.SetName)
+	}
+	if triumphant.Type != proto.ItemType_ItemTypeHead || canonical.Type != proto.ItemType_ItemTypeHead {
+		t.Fatalf("types triumphant=%v canonical=%v", triumphant.Type, canonical.Type)
+	}
+
+	sets, err := ExportTitanSets("../../assets/database/dbfilesclient", items)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var set *TitanItemSet
+	for i := range sets {
+		if sets[i].ID == 877 {
+			set = &sets[i]
+			break
+		}
+	}
+	if set == nil {
+		t.Fatal("missing set 877 图拉扬的战甲")
+	}
+	var helm *TitanSetPiece
+	for i := range set.Items {
+		if set.Items[i].ID == 48917 {
+			helm = &set.Items[i]
+			break
+		}
+	}
+	if helm == nil {
+		t.Fatal("set 877 missing canonical helm 48917")
+	}
+	if helm.Type != int32(proto.ItemType_ItemTypeHead) {
+		t.Fatalf("canonical helm type=%d, want head so tooltip can match 凯旋/征服 variants by slot", helm.Type)
+	}
+}
+
+func TestLoadTitanDisplayNamesMetaGem(t *testing.T) {
+	names, err := LoadTitanDisplayNames("../../assets/database/dbfilesclient/ItemSparse.csv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := names[41398]
+	if got != "残酷之大地侵攻钻石" {
+		t.Fatalf("41398 name=%q", got)
+	}
+}
+
+func TestDropTitanLowerIlvlDuplicates_DeathsVerdict(t *testing.T) {
+	db := NewWowDatabase()
+	db.Items[47115] = &proto.UIItem{
+		Id: 47115, Name: "死亡的裁决", Type: proto.ItemType_ItemTypeTrinket,
+		Ilvl: 238, Phase: 4, FactionRestriction: proto.UIItem_FACTION_RESTRICTION_ALLIANCE_ONLY,
+	}
+	db.Items[47131] = &proto.UIItem{
+		Id: 47131, Name: "死亡的裁决", Type: proto.ItemType_ItemTypeTrinket,
+		Ilvl: 232, Phase: 4, FactionRestriction: proto.UIItem_FACTION_RESTRICTION_ALLIANCE_ONLY,
+	}
+	db.Items[47303] = &proto.UIItem{
+		Id: 47303, Name: "死亡的选择", Type: proto.ItemType_ItemTypeTrinket,
+		Ilvl: 238, Phase: 4, FactionRestriction: proto.UIItem_FACTION_RESTRICTION_HORDE_ONLY,
+	}
+	db.Items[1] = &proto.UIItem{
+		Id: 1, Name: "死亡的裁决", Type: proto.ItemType_ItemTypeTrinket,
+		Ilvl: 200, Phase: 1, FactionRestriction: proto.UIItem_FACTION_RESTRICTION_ALLIANCE_ONLY,
+	}
+
+	got := DropTitanLowerIlvlDuplicates(db)
+	if got != 1 {
+		t.Fatalf("dropped %d, want 1", got)
+	}
+	if _, ok := db.Items[47115]; !ok {
+		t.Fatal("missing 238 死亡的裁决")
+	}
+	if _, ok := db.Items[47131]; ok {
+		t.Fatal("232 死亡的裁决 should be removed (Titan Time only has 238)")
+	}
+	if _, ok := db.Items[47303]; !ok {
+		t.Fatal("missing Horde 238 counterpart")
+	}
+	if _, ok := db.Items[1]; !ok {
+		t.Fatal("different-phase item should be kept")
+	}
+}

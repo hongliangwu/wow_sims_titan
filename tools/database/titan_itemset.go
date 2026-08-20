@@ -26,6 +26,7 @@ type TitanItemSet struct {
 type TitanSetPiece struct {
 	ID   int32  `json:"id"`
 	Name string `json:"name"`
+	Type int32  `json:"type,omitempty"`
 }
 
 type TitanSetBonus struct {
@@ -429,9 +430,9 @@ func ExportTitanSets(dbDir string, items []*proto.UIItem) ([]TitanItemSet, error
 }
 
 func buildTitanItemSets(cat *itemSetCatalog, items []*proto.UIItem) []TitanItemSet {
-	byID := map[int32]string{}
+	byID := map[int32]*proto.UIItem{}
 	for _, it := range items {
-		byID[it.Id] = it.Name
+		byID[it.Id] = it
 	}
 	used := map[int32]struct{}{}
 	for setID, pieceIDs := range cat.itemIDs {
@@ -454,12 +455,12 @@ func buildTitanItemSets(cat *itemSetCatalog, items []*proto.UIItem) []TitanItemS
 			if _, ok := seen[id]; ok {
 				return
 			}
-			n := byID[id]
-			if n == "" {
+			it := byID[id]
+			if it == nil || it.Name == "" {
 				return
 			}
 			seen[id] = struct{}{}
-			pieces = append(pieces, TitanSetPiece{ID: id, Name: n})
+			pieces = append(pieces, TitanSetPiece{ID: id, Name: it.Name, Type: int32(it.Type)})
 		}
 		for _, id := range cat.itemIDs[setID] {
 			add(id)

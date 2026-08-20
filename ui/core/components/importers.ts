@@ -2,6 +2,7 @@ import { t } from '../i18n.js';
 import { JsonObject } from '@protobuf-ts/runtime';
 import pako from 'pako';
 
+import { applyArmoryImport, armoryBookmarkletHref } from '../armory_import';
 import { IndividualSimUI } from '../individual_sim_ui';
 import {
 	Class,
@@ -287,6 +288,31 @@ export class Individual80UImporter<SpecType extends Spec> extends Importer {
 		const gear = this.simUI.sim.db.lookupEquipmentSpec(equipmentSpec);
 
 		this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, null, []);
+	}
+}
+
+export class IndividualArmoryImporter<SpecType extends Spec> extends Importer {
+	private readonly simUI: IndividualSimUI<SpecType>;
+	constructor(parent: HTMLElement, simUI: IndividualSimUI<SpecType>) {
+		super(parent, simUI, 'Armory Import', false);
+		this.simUI = simUI;
+
+		const bookmarkletHref = armoryBookmarkletHref();
+		this.descriptionElem.innerHTML = `
+			<p>从国服英雄榜抓取当前角色的装备（含宝石和附魔）。</p>
+			<p>官方接口必须登录，模拟器带不上英雄榜的登录状态，所以<strong>不能只粘贴角色页链接</strong>。</p>
+			<p>
+				把
+				<a class="armory-bookmarklet-link" href="${bookmarkletHref}">英雄榜导入</a>
+				拖到浏览器书签栏。打开已登录的英雄榜角色页后，点击该书签。
+			</p>
+			<p>也可以把书签复制出的 JSON 粘贴到下方，再点「导入」。</p>
+		`;
+	}
+
+	async onImport(data: string) {
+		await applyArmoryImport(this.simUI, data);
+		this.close();
 	}
 }
 

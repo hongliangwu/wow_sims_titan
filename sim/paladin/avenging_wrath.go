@@ -54,12 +54,24 @@ func (paladin *Paladin) RegisterAvengingWrathCD() {
 	paladin.AddMajorCooldown(core.MajorCooldown{
 		Spell: paladin.AvengingWrath,
 		Type:  core.CooldownTypeDPS,
-		// modify this logic if it should ever not be spammed on CD / maybe should synced with other CDs
 		ShouldActivate: func(sim *core.Simulation, character *core.Character) bool {
 			if paladin.CurrentSeal == paladin.SealOfVengeanceAura {
 				if paladin.SovDotSpell.Dot(paladin.CurrentTarget).GetStacks() < 5 {
 					return false
 				}
+			}
+
+			if paladin.Talents.HolyVerdict {
+				if paladin.HolyVerdictBuffAura != nil && paladin.HolyVerdictBuffAura.IsActive() {
+					return true
+				}
+				if paladin.HolyVerdictInvokeAura != nil && paladin.HolyVerdictInvokeAura.IsActive() {
+					return true
+				}
+				if sim.GetRemainingDuration() <= time.Second*25 {
+					return true
+				}
+				return false
 			}
 
 			return true

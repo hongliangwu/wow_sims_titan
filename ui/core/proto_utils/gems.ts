@@ -1,5 +1,4 @@
-import { GemColor } from '../proto/common.js';
-import { Profession } from '../proto/common.js';
+import { GemColor, ItemQuality, Profession } from '../proto/common.js';
 import { getEnumValues } from '../utils.js';
 import {
 	UIGem as Gem,
@@ -39,9 +38,18 @@ export function gemEligibleForSocket(gem: Gem, socketColor: GemColor) {
 	return (gem.color == GemColor.GemColorMeta) == (socketColor == GemColor.GemColorMeta);
 }
 
+// Titan Time has not unlocked P3 epic cuts (Cardinal Ruby, Ametrine, etc.).
+// Dragon's Eye (JC unique) and meta diamonds stay available.
+export function isEpicQualityGem(gem: Gem): boolean {
+	return gem.quality >= ItemQuality.ItemQualityEpic &&
+		gem.color != GemColor.GemColorMeta &&
+		gem.requiredProfession != Profession.Jewelcrafting;
+}
+
 export function isUnrestrictedGem(gem: Gem, phase?: number): boolean {
 	return !gem.unique &&
 		gem.requiredProfession == Profession.ProfessionUnknown &&
+		!isEpicQualityGem(gem) &&
 		(phase == null || gem.phase <= phase);
 }
 

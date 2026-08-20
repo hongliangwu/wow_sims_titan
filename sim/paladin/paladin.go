@@ -11,7 +11,7 @@ const (
 	SpellFlagPrimaryJudgement   = core.SpellFlagAgentReserved2
 )
 
-var TalentTreeSizes = [3]int{26, 26, 26}
+var TalentTreeSizes = [3]int{26, 26, 28}
 
 type Paladin struct {
 	core.Character
@@ -28,6 +28,7 @@ type Paladin struct {
 	HolyWrath             *core.Spell
 	Consecration          *core.Spell
 	CrusaderStrike        *core.Spell
+	HolyVerdict           *core.Spell
 	Exorcism              *core.Spell
 	HolyShield            *core.Spell
 	HammerOfTheRighteous  *core.Spell
@@ -58,6 +59,10 @@ type Paladin struct {
 	DivineProtectionAura    *core.Aura
 	ForbearanceAura         *core.Aura
 	VengeanceAura           *core.Aura
+	RighteousnessAura      *core.Aura
+	HolyVerdictBuffAura    *core.Aura
+	HolyVerdictLockoutAura *core.Aura
+	HolyVerdictInvokeAura  *core.Aura
 
 	// SealOfWisdomAura        *core.Aura
 	// SealOfLightAura         *core.Aura
@@ -133,6 +138,7 @@ func (paladin *Paladin) Initialize() {
 	// paladin.setupJudgementRefresh()
 
 	paladin.registerCrusaderStrikeSpell()
+	paladin.registerHolyVerdictSpell()
 	paladin.registerDivineStormSpell()
 	paladin.registerConsecrationSpell()
 	paladin.registerHammerOfWrathSpell()

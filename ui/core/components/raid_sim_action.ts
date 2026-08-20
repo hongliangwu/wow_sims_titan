@@ -143,14 +143,14 @@ export class RaidSimResultsManager {
 						class="results-sim-set-reference"
 						role="button"
 					>
-						<i class="fa fa-map-pin fa-lg text-${this.simUI.cssScheme} me-2"></i>Save as Reference
+						<i class="fa fa-map-pin fa-lg text-${this.simUI.cssScheme} me-2"></i>${t('Save as Reference')}
 					</a>
 					<div class="results-sim-reference-bar">
 						<a href="javascript:void(0)" class="results-sim-reference-swap me-3" role="button">
-							<i class="fas fa-arrows-rotate me-1"></i>Swap
+							<i class="fas fa-arrows-rotate me-1"></i>${t('Swap')}
 						</a>
 						<a href="javascript:void(0)" class="results-sim-reference-delete" role="button">
-							<i class="fa fa-times fa-lg me-1"></i>Cancel
+							<i class="fa fa-times fa-lg me-1"></i>${t('Cancel')}
 						</a>
 					</div>
 				</div>

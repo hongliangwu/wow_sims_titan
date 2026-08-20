@@ -1,4 +1,4 @@
-import { t } from '../i18n.js';
+import { t, localizeLabel } from '../i18n.js';
 import { EventID, TypedEvent } from '../typed_event.js';
 import { ContentBlock, ContentBlockHeaderConfig } from './content_block';
 
@@ -100,7 +100,7 @@ export class SavedDataManager<ModObject, T> extends Component {
 		const dataElemFragment = document.createElement('fragment');
 		dataElemFragment.innerHTML = `
 			<div class="saved-data-set-chip badge rounded-pill">
-				<a href="javascript:void(0)" class="saved-data-set-name" role="button">${config.name}</a>
+				<a href="javascript:void(0)" class="saved-data-set-name" role="button">${localizeLabel(config.name)}</a>
 			</div>
 		`;
 
@@ -109,7 +109,7 @@ export class SavedDataManager<ModObject, T> extends Component {
 			this.config.setData(TypedEvent.nextEventID(), this.modObject, config.data);
 
 			if (this.saveInput)
-				this.saveInput.value = config.name;
+				this.saveInput.value = localizeLabel(config.name);
 		});
 
 		if (!config.isPreset) {
@@ -131,7 +131,7 @@ export class SavedDataManager<ModObject, T> extends Component {
 
 			deleteButton.addEventListener('click', event => {
 				event.stopPropagation();
-				const shouldDelete = confirm(`${t('Delete saved')} ${t(this.config.label)} '${config.name}'?`);
+				const shouldDelete = confirm(`${t('Delete saved')} ${t(this.config.label)} '${localizeLabel(config.name)}'?`);
 				if (!shouldDelete)
 					return;
 
@@ -146,7 +146,7 @@ export class SavedDataManager<ModObject, T> extends Component {
 
 		if (config.tooltip) {
 			Tooltip.getOrCreateInstance(dataElem, {
-				title: config.tooltip,
+				title: t(config.tooltip),
 				placement: 'bottom',
 				html: true,
 			});

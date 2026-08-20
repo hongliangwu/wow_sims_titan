@@ -43,7 +43,7 @@ export const ROTATION_PRESET_DEFAULT = PresetUtils.makePresetAPLRotation('Defaul
 export const AuraMasteryTalents = {
 	name: 'Aura Mastery',
 	data: SavedTalents.create({
-		talentsString: '050501-05-05232051203331302133231331',
+		talentsString: '050501-05-0523205120333130211323113311',
 		glyphs: Glyphs.create({
 			major1: PaladinMajorGlyph.GlyphOfSealOfVengeance,
 			major2: PaladinMajorGlyph.GlyphOfJudgement,
@@ -59,7 +59,7 @@ export const AuraMasteryTalents = {
 export const DivineSacTalents = {
 	name: 'Divine Sacrifice & Guardian',
 	data: SavedTalents.create({
-		talentsString: '03-453201002-05222051203331302133201331',
+		talentsString: '03-453201002-0522205120333130211320113311',
 		glyphs: Glyphs.create({
 			major1: PaladinMajorGlyph.GlyphOfSealOfVengeance,
 			major2: PaladinMajorGlyph.GlyphOfJudgement,

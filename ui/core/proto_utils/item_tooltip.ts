@@ -13,7 +13,8 @@ import {
 	Stat,
 	WeaponType,
 } from '../proto/common.js';
-import { UIItem as Item } from '../proto/ui.js';
+import { UIGem as Gem, UIItem as Item } from '../proto/ui.js';
+import { gemMatchesSocket } from './gems.js';
 
 const qualityColors: Record<ItemQuality, string> = {
 	[ItemQuality.ItemQualityJunk]: '#9d9d9d',
@@ -168,7 +169,7 @@ function whiteStatLines(s: number[] | undefined): StatLine[] {
 	return lines;
 }
 
-function plusGreenStatLines(s: number[] | undefined): StatLine[] {
+function powerStatLines(s: number[] | undefined): StatLine[] {
 	const cn = isCn();
 	const lines: StatLine[] = [];
 	const add = (st: Stat, labelCn: string, labelEn: string) => {
@@ -184,7 +185,7 @@ function plusGreenStatLines(s: number[] | undefined): StatLine[] {
 	return lines;
 }
 
-function equipStatLines(s: number[] | undefined): StatLine[] {
+function ratingStatLines(s: number[] | undefined): StatLine[] {
 	const cn = isCn();
 	const lines: StatLine[] = [];
 	const add = (st: Stat, labelCn: string, labelEn: string) => {
@@ -215,14 +216,24 @@ function equipStatLines(s: number[] | undefined): StatLine[] {
 	return lines;
 }
 
+function equipStatLines(s: number[] | undefined): StatLine[] {
+	return [...powerStatLines(s), ...ratingStatLines(s)];
+}
+
 function socketBonusLines(s: number[] | undefined): StatLine[] {
-	return [...whiteStatLines(s), ...plusGreenStatLines(s), ...equipStatLines(s)];
+	return [...whiteStatLines(s), ...powerStatLines(s), ...ratingStatLines(s)];
 }
 
 function formatEquipLine(line: StatLine): string {
 	const n = Math.round(line.value);
 	if (isCn()) {
+		if (line.label === '每5秒法力回复') {
+			return `装备：每5秒恢复${n}点法力值。`;
+		}
 		return `装备：${escapeHtml(line.label)}提高${n}点。`;
+	}
+	if (line.label === 'Mana per 5 sec.') {
+		return `Equip: Restores ${n} mana per 5 sec.`;
 	}
 	return `Equip: Increases ${escapeHtml(line.label)} by ${n}.`;
 }
@@ -248,6 +259,7 @@ export function titanOriginLabel(phase?: number): string {
 export interface TitanSetPiece {
 	id: number;
 	name: string;
+	type?: number;
 }
 export interface TitanSetBonus {
 	threshold: number;
@@ -260,16 +272,38 @@ export interface TitanItemSetInfo {
 	bonuses: TitanSetBonus[];
 }
 
+export interface ItemTooltipGearPiece {
+	id: number;
+	setName: string;
+	type: ItemType;
+}
+
+export interface ItemTooltipContext {
+	equipped?: ItemTooltipGearPiece[];
+	gems?: Array<Gem | null>;
+}
+
 const titanSetsByName = new Map<string, TitanItemSetInfo>();
 const titanItemIds = new Set<number>();
 const titanItemEffects = new Map<number, string[]>();
 
-export function registerTitanItemSets(sets: TitanItemSetInfo[] | undefined | null) {
+export function registerTitanItemSets(sets: TitanItemSetInfo[] | undefined | null, items?: Array<{ id: number; type?: number }>) {
 	titanSetsByName.clear();
-	for (const s of sets || []) {
-		if (s?.name) {
-			titanSetsByName.set(s.name, s);
+	const typeById = new Map<number, number>();
+	for (const it of items || []) {
+		if (it?.id) {
+			typeById.set(it.id, it.type || 0);
 		}
+	}
+	for (const s of sets || []) {
+		if (!s?.name) {
+			continue;
+		}
+		const pieces = (s.items || []).map(p => ({
+			...p,
+			type: p.type || typeById.get(p.id) || 0,
+		}));
+		titanSetsByName.set(s.name, { ...s, items: pieces });
 	}
 }
 
@@ -306,19 +340,35 @@ export function isTitanCustomItemId(id: number): boolean {
 	return id >= TITAN_CUSTOM_ITEM_MIN_ID || titanItemIds.has(id);
 }
 
-function renderSetBlock(item: Item, equippedIds: number[]): string {
+function setPieceMatches(piece: TitanSetPiece, equipped: ItemTooltipGearPiece): boolean {
+	if (equipped.id === piece.id) {
+		return true;
+	}
+	return !!(piece.type && equipped.type === piece.type);
+}
+
+function renderSetBlock(item: Item, equippedPieces: ItemTooltipGearPiece[]): string {
 	const set = titanSetsByName.get(item.setName);
-	const equipped = new Set(equippedIds);
 	if (!set) {
 		return `<div class="titan-tt-set">${t('套装：', 'Set: ')}${escapeHtml(item.setName)}</div>`;
 	}
-	const worn = set.items.reduce((n, p) => n + (equipped.has(p.id) ? 1 : 0), 0);
+	const wornOfSet = equippedPieces.filter(e => e.setName === set.name);
+	const remaining = wornOfSet.slice();
+	const activePiece = new Set<number>();
+	for (let i = 0; i < set.items.length; i++) {
+		const idx = remaining.findIndex(e => setPieceMatches(set.items[i], e));
+		if (idx >= 0) {
+			activePiece.add(i);
+			remaining.splice(idx, 1);
+		}
+	}
+	const worn = wornOfSet.length;
 	const lines: string[] = [
 		`<div class="titan-tt-set">${t('套装：', 'Set: ')}${escapeHtml(set.name)} (${worn}/${set.items.length})</div>`,
 	];
-	for (const piece of set.items) {
-		const on = equipped.has(piece.id);
-		lines.push(`<div class="titan-tt-set-piece${on ? ' is-active' : ''}">${escapeHtml(piece.name)}</div>`);
+	for (let i = 0; i < set.items.length; i++) {
+		const on = activePiece.has(i);
+		lines.push(`<div class="titan-tt-set-piece${on ? ' is-active' : ''}">${escapeHtml(set.items[i].name)}</div>`);
 	}
 	for (const bonus of set.bonuses || []) {
 		const on = worn >= bonus.threshold;
@@ -331,17 +381,23 @@ function renderSetBlock(item: Item, equippedIds: number[]): string {
 	return lines.join('');
 }
 
-export function buildItemTooltipHtml(item: Item, equippedIds: number[] = []): string {
+function socketsMatchBonus(sockets: GemColor[] | undefined, gems: Array<Gem | null> | undefined): boolean {
+	if (!sockets?.length) {
+		return false;
+	}
+	return sockets.every((socketColor, i) => gems?.[i] != null && gemMatchesSocket(gems[i]!, socketColor));
+}
+
+export function buildItemTooltipHtml(item: Item, ctx: ItemTooltipContext = {}): string {
 	const color = qualityColors[item.quality] || '#ffffff';
 	const rows: string[] = [];
 	const origin = isTitanCustomItemId(item.id)
 		? titanOriginLabel(item.phase)
-		: (item.phase ? `Phase ${item.phase}` : '');
+		: (item.phase ? t(`阶段 ${item.phase}`, `Phase ${item.phase}`) : '');
 
 	rows.push(
 		`<div class="titan-tt-head">` +
 			`<div class="titan-tt-name" style="color:${color}">${escapeHtml(item.name)}</div>` +
-			(item.heroic ? `<div class="titan-tt-badge">[H]</div>` : '') +
 			(origin ? `<div class="titan-tt-badge">[${escapeHtml(origin)}]</div>` : '') +
 		`</div>`,
 	);
@@ -376,23 +432,24 @@ export function buildItemTooltipHtml(item: Item, equippedIds: number[] = []): st
 	for (const line of whiteStatLines(item.stats)) {
 		rows.push(`<div>${formatWhiteStat(line)}</div>`);
 	}
-	for (const line of plusGreenStatLines(item.stats)) {
-		const sign = line.value > 0 ? '+' : '';
-		rows.push(`<div class="titan-tt-green">${sign}${Math.round(line.value)} ${escapeHtml(line.label)}</div>`);
-	}
 	if (item.gemSockets?.length) {
-		for (const sock of item.gemSockets) {
+		const gems = ctx.gems || [];
+		for (let i = 0; i < item.gemSockets.length; i++) {
+			const sock = item.gemSockets[i];
+			const gem = gems[i];
+			const label = gem?.name ? gem.name : socketLabel(sock);
 			rows.push(
 				`<div class="titan-tt-socket-row">` +
 					`<span class="titan-tt-gem titan-tt-gem-${socketCss(sock)}"></span>` +
-					`${escapeHtml(socketLabel(sock))}` +
+					`${escapeHtml(label)}` +
 				`</div>`,
 			);
 		}
 		const bonus = socketBonusLines(item.socketBonus);
 		if (bonus.length) {
+			const active = socketsMatchBonus(item.gemSockets, gems);
 			rows.push(
-				`<div class="titan-tt-socket-bonus">${t('插槽加成：', 'Socket Bonus: ')}` +
+				`<div class="titan-tt-socket-bonus${active ? ' is-active' : ''}">${t('插槽加成：', 'Socket Bonus: ')}` +
 				bonus.map(b => `+${Math.round(b.value)} ${escapeHtml(b.label)}`).join(', ') +
 				`</div>`,
 			);
@@ -408,12 +465,12 @@ export function buildItemTooltipHtml(item: Item, equippedIds: number[] = []): st
 		rows.push(`<div class="titan-tt-green">${escapeHtml(line)}</div>`);
 	}
 	if (item.setName) {
-		rows.push(renderSetBlock(item, equippedIds));
+		rows.push(renderSetBlock(item, ctx.equipped || []));
 	}
 	return rows.join('');
 }
 
-export function attachLocalItemTooltip(elem: HTMLElement, item: Item, equippedIds: number[] = []) {
+export function attachLocalItemTooltip(elem: HTMLElement, item: Item, ctx: ItemTooltipContext | (() => ItemTooltipContext) = {}) {
 	if (!isTitanCustomItemId(item.id)) {
 		return;
 	}
@@ -421,7 +478,7 @@ export function attachLocalItemTooltip(elem: HTMLElement, item: Item, equippedId
 	new Tooltip(elem, {
 		html: true,
 		sanitize: false,
-		title: () => buildItemTooltipHtml(item, equippedIds),
+		title: () => buildItemTooltipHtml(item, typeof ctx === 'function' ? ctx() : ctx),
 		customClass: 'titan-item-tooltip',
 		placement: 'right',
 		trigger: 'hover',

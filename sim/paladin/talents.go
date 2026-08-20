@@ -539,7 +539,8 @@ func (paladin *Paladin) applyJudgementsOfTheWise() {
 		return
 	}
 
-	procChance := float64(paladin.Talents.JudgementsOfTheWise) / 3
+	// Titan: 1 point is the old 3/3 effect (100% proc).
+	procChance := 1.0
 	paladin.JowiseManaMetrics = paladin.NewManaMetrics(core.ActionID{SpellID: 31878})
 	replSrc := paladin.Env.Raid.NewReplenishmentSource(core.ActionID{SpellID: 31878})
 

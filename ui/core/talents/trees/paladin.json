@@ -857,9 +857,9 @@
                 "colIdx":2
              },
              "spellIds":[
-                31876
+                31878
              ],
-             "maxPoints":3
+             "maxPoints":1
           },
           {
              "fieldName":"fanaticism",
@@ -912,10 +912,25 @@
              "maxPoints":1
           },
           {
-             "fieldName":"sheathOfLight",
+             "fieldName":"holyVerdict",
              "location":{
                 "rowIdx":8,
                 "colIdx":2
+             },
+             "prereqLocation":{
+                "rowIdx":8,
+                "colIdx":1
+             },
+             "spellIds":[
+                1299093
+             ],
+             "maxPoints":1
+          },
+          {
+             "fieldName":"sheathOfLight",
+             "location":{
+                "rowIdx":8,
+                "colIdx":3
              },
              "spellIds":[
                 53501
@@ -932,6 +947,21 @@
                 53380
              ],
              "maxPoints":3
+          },
+          {
+             "fieldName":"improvedHolyVerdict",
+             "location":{
+                "rowIdx":9,
+                "colIdx":2
+             },
+             "prereqLocation":{
+                "rowIdx":8,
+                "colIdx":2
+             },
+             "spellIds":[
+                1299096
+             ],
+             "maxPoints":1
           },
           {
              "fieldName":"divineStorm",

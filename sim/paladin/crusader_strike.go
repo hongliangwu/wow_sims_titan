@@ -51,7 +51,10 @@ func (paladin *Paladin) registerCrusaderStrikeSpell() {
 				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
 				spell.BonusWeaponDamage()
 
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
+			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
+			if result.Landed() && paladin.Talents.HolyVerdict {
+				paladin.addHolyVerdictRighteousness(sim)
+			}
 
 			jowAura := jowAuras.Get(target)
 			if jowAura.IsActive() {

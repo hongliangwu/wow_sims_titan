@@ -106,7 +106,7 @@ func BenchmarkSimulate(b *testing.B) {
 	core.RaidBenchmark(b, rsr)
 }
 
-var StandardTalents = "050501-05-05232051203331302133231331"
+var StandardTalents = "050501-05-0523205120333130211323113311"
 var StandardGlyphs = &proto.Glyphs{
 	Major1: int32(proto.PaladinMajorGlyph_GlyphOfSealOfVengeance),
 	Major2: int32(proto.PaladinMajorGlyph_GlyphOfJudgement),

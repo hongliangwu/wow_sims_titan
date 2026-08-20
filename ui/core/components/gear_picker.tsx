@@ -32,14 +32,14 @@ import {
 } from './other_inputs';
 import { Clusterize } from './virtual_scroll/clusterize.js';
 
-const playerEquippedIds = (player: Player<any>): number[] => {
+const playerEquippedTooltipItems = (player: Player<any>) => {
 	return Object.values(player.getGear().asMap())
 		.filter((eq): eq is EquippedItem => !!eq)
-		.map(eq => eq.item.id);
-};
-
-const createHeroicLabel = () => {
-	return <span className="heroic-label">[H]</span>;
+		.map(eq => ({
+			id: eq.item.id,
+			setName: eq.item.setName,
+			type: eq.item.type,
+		}));
 };
 
 const createTitanLabel = (phase?: number) => {
@@ -47,13 +47,10 @@ const createTitanLabel = (phase?: number) => {
 };
 
 const createPhaseLabel = (phase: number) => {
-	return <span className="phase-item-badge">[Phase {phase}]</span>;
+	return <span className="phase-item-badge">[{t('Phase')} {phase}]</span>;
 };
 
 const applyItemNameLabels = (nameElem: HTMLElement, item: { id: number; heroic?: boolean; phase?: number }) => {
-	if (item.heroic) {
-		nameElem.appendChild(createHeroicLabel());
-	}
 	if (isTitanCustomItemId(item.id)) {
 		nameElem.appendChild(createTitanLabel(item.phase));
 	} else if (item.phase) {
@@ -191,8 +188,12 @@ export class ItemRenderer extends Component {
 		this.player.setWowheadData(newItem, this.iconElem);
 		this.player.setWowheadData(newItem, this.nameElem);
 		if (isTitanCustomItemId(newItem.item.id)) {
-			attachLocalItemTooltip(this.iconElem, newItem.item, playerEquippedIds(this.player));
-			attachLocalItemTooltip(this.nameElem, newItem.item, playerEquippedIds(this.player));
+			const tooltipCtx = () => ({
+				equipped: playerEquippedTooltipItems(this.player),
+				gems: newItem.gems,
+			});
+			attachLocalItemTooltip(this.iconElem, newItem.item, tooltipCtx);
+			attachLocalItemTooltip(this.nameElem, newItem.item, tooltipCtx);
 		}
 		newItem
 			.asActionId()
@@ -391,7 +392,10 @@ export class IconItemSwapPicker extends Component {
 			newItem.asActionId().fillAndSet(this.iconAnchor, true, true);
 			this.player.setWowheadData(newItem, this.iconAnchor);
 			if (isTitanCustomItemId(newItem.item.id)) {
-				attachLocalItemTooltip(this.iconAnchor, newItem.item, playerEquippedIds(this.player));
+				attachLocalItemTooltip(this.iconAnchor, newItem.item, () => ({
+					equipped: playerEquippedTooltipItems(this.player),
+					gems: newItem.gems,
+				}));
 			}
 
 			newItem.allSocketColors().forEach((socketColor, gemIdx) => {
@@ -1179,7 +1183,6 @@ export class ItemList<T> {
 						<img className="selector-modal-list-item-icon" ref={iconElem}></img>
 						<label className="selector-modal-list-item-name" ref={nameElem}>
 							{itemData.name}
-							{itemData.heroic && createHeroicLabel()}
 							{this.label == 'Items' && isTitanCustomItemId(itemData.id) && createTitanLabel(itemData.phase)}
 							{this.label == 'Items' && !isTitanCustomItemId(itemData.id) && itemData.phase > 0 && createPhaseLabel(itemData.phase)}
 						</label>
@@ -1230,7 +1233,13 @@ export class ItemList<T> {
 			filledId.setWowheadHref(anchorElem.value!);
 			iconElem.value!.src = filledId.iconUrl;
 			if (this.label == 'Items' && isTitanCustomItemId(itemData.id)) {
-				attachLocalItemTooltip(anchorElem.value!, itemData.item as unknown as Item, playerEquippedIds(this.player));
+				attachLocalItemTooltip(anchorElem.value!, itemData.item as unknown as Item, () => {
+					const equippedNow = this.player.getEquippedItem(this.slot);
+					return {
+						equipped: playerEquippedTooltipItems(this.player),
+						gems: equippedNow?.item.id === itemData.id ? equippedNow.gems : undefined,
+					};
+				});
 			}
 			if (getLanguageCode() && filledId.name && nameElem.value) {
 				itemData.name = filledId.name;

@@ -35,11 +35,11 @@ abstract class GemOptimizer {
 	jcUpgradePriority: Array<GemCapsData>;
 
 	static jcUpgradesById: Record<number, number> = {
-		40118: 42154,
-		40125: 42156,
-		40112: 42143,
-		40111: 42142,
-		40119: 36767,
+		40003: 42154, // Precise Scarlet Ruby -> Precise Dragon's Eye
+		40014: 42156, // Rigid Autumn's Glow -> Rigid Dragon's Eye
+		39997: 42143, // Delicate Scarlet Ruby -> Delicate Dragon's Eye
+		39996: 42142, // Bold Scarlet Ruby -> Bold Dragon's Eye
+		40008: 36767, // Solid Sky Sapphire -> Solid Dragon's Eye
 	};
 
 	constructor(simUI: IndividualSimUI<any>) {
@@ -220,7 +220,16 @@ abstract class GemOptimizer {
 				continue;
 			}
 
-			const upgradedGem = this.sim.db.lookupGem(GemOptimizer.jcUpgradesById[gemData.gemId]);
+			const upgradeId = GemOptimizer.jcUpgradesById[gemData.gemId];
+			if (!upgradeId) {
+				gemIdx += 1;
+				continue;
+			}
+			const upgradedGem = this.sim.db.lookupGem(upgradeId);
+			if (!upgradedGem) {
+				gemIdx += 1;
+				continue;
+			}
 			const testGear = updatedGear.withSingleGemSubstitution(baseGem, upgradedGem, this.isBlacksmithing);
 			const newStats = await this.updateGear(testGear);
 
@@ -342,24 +351,24 @@ export class PhysicalDPSGemOptimizer extends GemOptimizer {
 		// Update red gem priority
 		const redGemCaps = new Array<GemCapsData>();
 
-		// Fractured Cardinal Ruby
+		// Fractured Scarlet Ruby
 		if (this.useArpGems) {
-			redGemCaps.push({ gemId: 40117, statCaps: arpCap });
+			redGemCaps.push({ gemId: 40002, statCaps: arpCap });
 		}
 
-		// Precise Cardinal Ruby
+		// Precise Scarlet Ruby
 		if (this.useExpGems) {
-			redGemCaps.push({ gemId: 40118, statCaps: expCap });
+			redGemCaps.push({ gemId: 40003, statCaps: expCap });
 		}
 
-		// Delicate Cardinal Ruby
+		// Delicate Scarlet Ruby
 		if (this.useAgiGems) {
-			redGemCaps.push({ gemId: 40112, statCaps: critCap });
+			redGemCaps.push({ gemId: 39997, statCaps: critCap });
 		}
 
-		// Bold Cardinal Ruby
+		// Bold Scarlet Ruby
 		if (this.useStrGems) {
-			redGemCaps.push({ gemId: 40111, statCaps: new Stats() });
+			redGemCaps.push({ gemId: 39996, statCaps: new Stats() });
 		}
 
 		this.gemPriorityByColor[GemColor.GemColorRed] = redGemCaps;
@@ -367,47 +376,47 @@ export class PhysicalDPSGemOptimizer extends GemOptimizer {
 		// Update yellow gem priority
 		const yellowGemCaps = new Array<GemCapsData>();
 
-		// Accurate Ametrine
+		// Accurate Monarch Topaz
 		if (this.useExpGems) {
-			yellowGemCaps.push({ gemId: 40162, statCaps: hitCap.add(expCap) });
+			yellowGemCaps.push({ gemId: 40058, statCaps: hitCap.add(expCap) });
 		}
 
-		// Rigid Ametrine
-		yellowGemCaps.push({ gemId: 40125, statCaps: hitCap });
+		// Rigid Autumn's Glow
+		yellowGemCaps.push({ gemId: 40014, statCaps: hitCap });
 
-		// Fractured Cardinal Ruby
+		// Fractured Scarlet Ruby
 		if (this.arpStackDetected) {
-			yellowGemCaps.push({ gemId: 40117, statCaps: arpCap });
+			yellowGemCaps.push({ gemId: 40002, statCaps: arpCap });
 		}
 		
-		// Accurate Ametrine (needed to add twice to catch some edge cases)
+		// Accurate Monarch Topaz (needed to add twice to catch some edge cases)
 		if (this.useExpGems) {
-			yellowGemCaps.push({ gemId: 40162, statCaps: hitCap.add(expCap) });
+			yellowGemCaps.push({ gemId: 40058, statCaps: hitCap.add(expCap) });
 		}
 
-		// Glinting Ametrine
+		// Glinting Monarch Topaz
 		if (this.useAgiGems) {
-			yellowGemCaps.push({ gemId: 40148, statCaps: hitCap.add(critCap) });
+			yellowGemCaps.push({ gemId: 40044, statCaps: hitCap.add(critCap) });
 		}
 
-		// Etched Ametrine
+		// Etched Monarch Topaz
 		if (this.useStrGems) {
-			yellowGemCaps.push({ gemId: 40143, statCaps: hitCap });
+			yellowGemCaps.push({ gemId: 40038, statCaps: hitCap });
 		}
 
-		// Deadly Ametrine
+		// Deadly Monarch Topaz
 		if (this.useAgiGems) {
-			yellowGemCaps.push({ gemId: 40147, statCaps: critCap });
+			yellowGemCaps.push({ gemId: 40043, statCaps: critCap });
 		}
 
-		// Inscribed Ametrine
+		// Inscribed Monarch Topaz
 		if (this.useStrGems) {
-			yellowGemCaps.push({ gemId: 40142, statCaps: critCap });
+			yellowGemCaps.push({ gemId: 40037, statCaps: critCap });
 		}
 
-		// Fierce Ametrine
+		// Fierce Monarch Topaz
 		if (this.useStrGems) {
-			yellowGemCaps.push({ gemId: 40146, statCaps: new Stats() });
+			yellowGemCaps.push({ gemId: 40041, statCaps: new Stats() });
 		}
 		
 		this.gemPriorityByColor[GemColor.GemColorYellow] = yellowGemCaps;
@@ -416,15 +425,15 @@ export class PhysicalDPSGemOptimizer extends GemOptimizer {
 		this.jcUpgradePriority = new Array<GemCapsData>();
 		
 		if (this.useExpGems) {
-			this.jcUpgradePriority.push({ gemId: 40118, statCaps: expCap });
+			this.jcUpgradePriority.push({ gemId: 40003, statCaps: expCap });
 		}
 		
 		if (this.useAgiGems) {
-			this.jcUpgradePriority.push({ gemId: 40112, statCaps: critCap });
+			this.jcUpgradePriority.push({ gemId: 39997, statCaps: critCap });
 		}
 
 		if (this.useStrGems) {
-			this.jcUpgradePriority.push({ gemId: 40111, statCaps: new Stats() });
+			this.jcUpgradePriority.push({ gemId: 39996, statCaps: new Stats() });
 		}
 	}
 
@@ -648,7 +657,7 @@ export class TankGemOptimizer extends GemOptimizer {
 	updateGemPriority(ungemmedGear: Gear, passiveStats: Stats) {
 		// Base class just stuffs pure Stamina gems everywhere
 		const blueGemCaps = new Array<GemCapsData>();
-		blueGemCaps.push({ gemId: 40119, statCaps: new Stats() });
+		blueGemCaps.push({ gemId: 40008, statCaps: new Stats() });
 		this.gemPriorityByColor[GemColor.GemColorBlue] = blueGemCaps;
 		this.jcUpgradePriority = blueGemCaps;
 	}
@@ -658,7 +667,7 @@ export class TankGemOptimizer extends GemOptimizer {
 		 * Use a single Shifting Dreadstone gem for meta activation, in the slot
 		 * with the strongest bonus for a single red socket.
 		 */
-		return this.socketGemInFirstMatchingSocket(gear, this.findStrongestSocketBonus(gear, GemColor.GemColorRed, true, GemColor.GemColorYellow).itemSlot, GemColor.GemColorRed, 40130);
+		return this.socketGemInFirstMatchingSocket(gear, this.findStrongestSocketBonus(gear, GemColor.GemColorRed, true, GemColor.GemColorYellow).itemSlot, GemColor.GemColorRed, 40023);
 	}
 	
 	allowGemInSocket(gemColor: GemColor, socketColor: GemColor, itemSlot: ItemSlot, item: EquippedItem): boolean {

@@ -49,6 +49,7 @@ import { isTitanCustomItemId } from './proto_utils/item_tooltip.js';
 import { playerTalentStringToProto } from './talents/factory.js';
 import { Gear, ItemSwapGear } from './proto_utils/gear.js';
 import {
+	isEpicQualityGem,
 	isUnrestrictedGem,
 	gemMatchesSocket,
 } from './proto_utils/gems.js';
@@ -1287,6 +1288,10 @@ export class Player<SpecType extends Spec> {
 		const isJewelcrafting = this.hasProfession(Profession.Jewelcrafting);
 		return gemData.filter(gemElem => {
 			const gem = getGemFunc(gemElem);
+			if (isEpicQualityGem(gem)) {
+				return false;
+			}
+
 			if (!isJewelcrafting && gem.requiredProfession == Profession.Jewelcrafting) {
 				return false;
 			}

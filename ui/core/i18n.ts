@@ -68,6 +68,7 @@ const ZH: Record<string, string> = {
 	'2H': '双手',
 	'Match Socket': '匹配插槽',
 	'Show EP': '显示 EP',
+	'Phase': '阶段',
 	'Phase 1': '阶段 1',
 	'Phase 2': '阶段 2',
 	'Phase 3': '阶段 3',
@@ -172,6 +173,28 @@ const ZH: Record<string, string> = {
 	'Use as reference': '设为对照',
 	'Swap reference with current': '与当前结果对调',
 	'Remove reference': '移除对照',
+	'Save as Reference': '保存为对照',
+	'Swap': '对调',
+	'Cancel': '取消',
+	'vs reference': '相对对照',
+	'Unequip All Gems': '卸下全部宝石',
+	'Melee Crit Cap': '近战爆击上限',
+	'Exact': '正好',
+	'Over by': '超出',
+	'Under by': '还差',
+	'PreRaid': '开荒前',
+	'P1 Preset': 'P1 配装',
+	'P2 Preset': 'P2 配装',
+	'P3 Mace Preset': 'P3 钉锤配装',
+	'P4 Preset': 'P4 配装',
+	'P5 Preset': 'P5 配装',
+	'Default': '默认',
+	'Aura Mastery': '光环掌握',
+	'Divine Sacrifice & Guardian': '神圣牺牲与守护',
+	'Cataclysm sim development has begun! <a href="https://discord.gg/p3DgvmnDCS" target="_blank">Join our Discord</a> for more details or to contribute to the project.':
+		'大地的裂变模拟器已开始开发！<a href="https://discord.gg/p3DgvmnDCS" target="_blank">加入 Discord</a> 了解详情或参与贡献。',
+	'<p>Preset gear lists are intended as rough approximations of BIS, and will often not be the absolute highest-DPS setup for you. Your optimal gear setup will depend on many factors; that\'s why we have a sim!</p><p>Items may also be omitted from the presets if they are highly contested and clearly better utilized on other classes, to encourage equitable gearing for the raid as a whole.</p>':
+		'<p>预设配装只是大致的毕业参考，往往不是你个人的绝对最高 DPS 组合。最优装备取决于很多因素，这也是模拟器存在的意义。</p><p>部分热门装备可能不会出现在预设中，以便让它们留给更合适的职业。</p>',
 	'presimulations running': '预模拟进行中',
 	'iterations complete': '次迭代已完成',
 	'Stats': '属性',
@@ -184,6 +207,7 @@ const ZH: Record<string, string> = {
 	'80U': '80U',
 	'WoWHead': 'Wowhead',
 	'Addon': '插件',
+	'Armory': '英雄榜',
 	'Link': '链接',
 	'80U EP': '80U EP',
 	'Pawn EP': 'Pawn EP',
@@ -193,6 +217,7 @@ const ZH: Record<string, string> = {
 	'80 Upgrades Import': '80 Upgrades 导入',
 	'Wowhead Import': 'Wowhead 导入',
 	'Addon Import': '插件导入',
+	'Armory Import': '英雄榜导入',
 	'Sharable Link': '分享链接',
 	'Wowhead Export': 'Wowhead 导出',
 	'80Upgrades EP Export': '80Upgrades EP 导出',
@@ -595,6 +620,47 @@ export function t(en: string | undefined | null): string {
 		return en;
 	}
 	return ZH[en] ?? en;
+}
+
+const PRESET_REPLACEMENTS: Array<[RegExp, string]> = [
+	[/\bPre-?Raid\b/gi, '开荒前'],
+	[/\bPreraid\b/gi, '开荒前'],
+	[/\bAura Mastery\b/g, '光环掌握'],
+	[/\bAssassination\b/g, '刺杀'],
+	[/\bAffliction\b/g, '痛苦'],
+	[/\bPreset\b/g, '配装'],
+	[/\bMace\b/g, '钉锤'],
+	[/\bDefault\b/g, '默认'],
+	[/\bCombat\b/g, '战斗'],
+	[/\bBlood\b/g, '鲜血'],
+	[/\bFrost\b/g, '冰霜'],
+	[/\bUnholy\b/g, '邪恶'],
+	[/\bArms\b/g, '武器'],
+	[/\bFury\b/g, '狂怒'],
+	[/\bArcane\b/g, '奥术'],
+	[/\bFire\b/g, '火焰'],
+	[/\bDestro\b/g, '毁灭'],
+	[/\bDemo\b/g, '恶魔'],
+	[/\[H\]/g, '[部落]'],
+	[/\[A\]/g, '[联盟]'],
+];
+
+/** Localize preset / saved-set labels, falling back to common English word swaps. */
+export function localizeLabel(en: string | undefined | null): string {
+	if (!en) {
+		return '';
+	}
+	if (!isZh()) {
+		return en;
+	}
+	if (ZH[en]) {
+		return ZH[en];
+	}
+	let out = en;
+	for (const [re, cn] of PRESET_REPLACEMENTS) {
+		out = out.replace(re, cn);
+	}
+	return out.replace(/\s+/g, ' ').trim();
 }
 
 export function localizeMap<K>(en: Map<K, string>): Map<K, string> {

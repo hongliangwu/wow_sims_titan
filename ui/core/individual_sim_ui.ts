@@ -16,6 +16,8 @@ import { SavedDataConfig } from './components/saved_data_manager';
 import { addStatWeightsAction } from './components/stat_weights_action';
 import * as Mechanics from './constants/mechanics';
 import * as Tooltips from './constants/tooltips';
+import { t } from './i18n';
+import { applyArmoryImport, tryConsumeArmoryQueryParam } from './armory_import';
 import { simLaunchStatuses } from './launched_sims';
 import { Player, PlayerConfig, registerSpecConfig as registerPlayerConfig } from './player';
 import { PresetGear, PresetRotation } from './preset_utils';
@@ -300,6 +302,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 			// first callback invoked from waitForInit().
 			this.sim.waitForInit().then(() => {
 				this.loadSettings();
+				this.tryImportArmoryFromUrl();
 
 				if (isHealingSpec(this.player.spec)) {
 					alert(Tooltips.HEALING_SIM_DISCLAIMER);
@@ -361,6 +364,16 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 				const jsonStr = IndividualSimSettings.toJsonString(this.toProto());
 				window.localStorage.setItem(this.getSettingsStorageKey(), jsonStr);
 			});
+		});
+	}
+
+	private tryImportArmoryFromUrl() {
+		const data = tryConsumeArmoryQueryParam();
+		if (!data) {
+			return;
+		}
+		applyArmoryImport(this, data).catch(error => {
+			alert(`英雄榜导入失败：\n${error?.message || error}`);
 		});
 	}
 
@@ -439,6 +452,11 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 			'WoWHead',
 			_parent => new Importers.IndividualWowheadGearPlannerImporter(this.rootElem, this),
 			false,
+		);
+		this.simHeader.addImportLink(
+			t('Armory'),
+			_parent => new Importers.IndividualArmoryImporter(this.rootElem, this),
+			true,
 		);
 		this.simHeader.addImportLink(
 			'Addon',

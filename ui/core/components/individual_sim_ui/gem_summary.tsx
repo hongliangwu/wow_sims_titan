@@ -1,5 +1,6 @@
 import { element } from 'tsx-vanilla';
 
+import { t } from '../../i18n.js';
 import { setItemQualityCssClass } from '../../css_utils';
 import { Player } from '../../player';
 import { UIGem as Gem } from '../../proto/ui.js';
@@ -39,7 +40,7 @@ export class GemSummary extends Component {
 						this.unequipAllGems();
 					}}>
 					<i className="fas fa-times me-1"></i>
-					Unequip All Gems
+					{t('Unequip All Gems')}
 				</button>
 			);
 			headerElement.appendChild(unequipButton);

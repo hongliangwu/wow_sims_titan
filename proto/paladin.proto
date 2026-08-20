@@ -84,9 +84,11 @@ message PaladinTalents {
 	int32 sanctified_wrath = 73;
 	int32 swift_retribution = 74;
 	bool crusader_strike = 75;
-	int32 sheath_of_light = 76;
-	int32 righteous_vengeance = 77;
-	bool divine_storm = 78;
+	bool holy_verdict = 76;
+	int32 sheath_of_light = 77;
+	int32 righteous_vengeance = 78;
+	bool improved_holy_verdict = 79;
+	bool divine_storm = 80;
 }
 
 enum PaladinMajorGlyph {
