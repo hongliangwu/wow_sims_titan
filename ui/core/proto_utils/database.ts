@@ -26,6 +26,8 @@ import {
 import { gemEligibleForSocket, gemMatchesSocket, isEpicQualityGem } from './gems.js';
 import { EquippedItem } from './equipped_item.js';
 import { Gear, ItemSwapGear } from './gear.js';
+import { CHARACTER_LEVEL } from '../constants/mechanics.js';
+import { getLanguageCode, getWowheadLocaleId } from '../constants/lang.js';
 import { distinct } from '../utils.js';
 import { registerTitanItemEffects, registerTitanItemIds, registerTitanItemSets } from './item_tooltip.js';
 
@@ -295,9 +297,8 @@ export class Database {
 			});
 		}
 
-		// Remote tooltip fetch disabled for local/offline use.
-		// Return empty IconData for items not found in local database.
-		return IconData.create({ id: itemId });
+		// Fall back to local tooltip API (served by Go server from db.bin).
+		return Database.getWowheadTooltipData(itemId, 'item');
 	}
 
 	static async getSpellIconData(spellId: number): Promise<IconData> {
@@ -312,8 +313,24 @@ export class Database {
 			return await db.spellIcons[spellId];
 		}
 
-		// Remote tooltip fetch disabled for local/offline use.
-		return IconData.create({ id: spellId });
+		// Fall back to local tooltip API (served by Go server from db.bin).
+		return Database.getWowheadTooltipData(spellId, 'spell');
+	}
+
+	private static async getWowheadTooltipData(id: number, tooltipPostfix: string): Promise<IconData> {
+		const url = `/wotlk/api/tooltip/${tooltipPostfix}/${id}`;
+		try {
+			const response = await fetch(url);
+			const json = await response.json();
+			return IconData.create({
+				id: id,
+				name: json['name'] || '',
+				icon: json['icon'] || '',
+			});
+		} catch (e) {
+			console.error('Error fetching local tooltip: ' + url + '\n\n' + e);
+			return IconData.create({ id: id });
+		}
 	}
 
 

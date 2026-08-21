@@ -238,6 +238,7 @@ func (s *server) setupAsyncServer() {
 
 func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName string, wasm bool, inputReader *bufio.Reader) {
 	s.setupAsyncServer()
+	registerTooltipRoutes()
 
 	var fs http.Handler
 	if useFS {

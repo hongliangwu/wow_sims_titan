@@ -138,24 +138,30 @@ export class ActionId {
 	}
 
 	static makeItemUrl(id: number): string {
-		return '';
+		return `/wotlk/api/tooltip/item/${id}`;
 	}
 	static makeSpellUrl(id: number): string {
-		return '';
+		return `/wotlk/api/tooltip/spell/${id}`;
 	}
 	static makeQuestUrl(id: number): string {
-		return '';
+		return '#';
 	}
 	static makeNpcUrl(id: number): string {
-		return '';
+		return '#';
 	}
 	static makeZoneUrl(id: number): string {
-		return '';
+		return '#';
 	}
 
 	setWowheadHref(elem: HTMLAnchorElement) {
-		// Links to external sites disabled for local/offline use.
-		return;
+		// Links point to local tooltip API instead of external wowhead.
+		if (this.itemId) {
+			elem.href = ActionId.makeItemUrl(this.itemId);
+		} else if (this.spellId) {
+			elem.href = ActionId.makeSpellUrl(this.spellId);
+		} else {
+			elem.href = '#';
+		}
 	}
 
 	setBackgroundAndHref(elem: HTMLAnchorElement) {

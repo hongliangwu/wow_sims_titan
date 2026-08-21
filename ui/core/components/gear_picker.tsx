@@ -11,7 +11,7 @@ import { DatabaseFilters, RepFaction, UIEnchant as Enchant, UIGem as Gem, UIItem
 import { ActionId } from '../proto_utils/action_id';
 import { t } from '../i18n.js';
 import { attachLocalItemTooltip, attachLocalEnchantTooltip, clearLocalItemTooltip, isTitanCustomItemId, titanDuplicateKey, titanOriginLabel } from '../proto_utils/item_tooltip';
-import { getEnchantDescription, getUniqueEnchantString } from '../proto_utils/enchants';
+import { getEnchantDescription, getEnchantDescriptionSync, getUniqueEnchantString } from '../proto_utils/enchants';
 import { EquippedItem } from '../proto_utils/equipped_item';
 import { gemMatchesSocket, getEmptyGemSocketIconUrl } from '../proto_utils/gems';
 import { difficultyNames, professionNames, REP_FACTION_NAMES, REP_LEVEL_NAMES, slotNames } from '../proto_utils/names.js';
@@ -450,11 +450,11 @@ export class SelectorModal extends BaseModal {
 			<div className="d-flex align-items-center form-text mt-3">
 				<i className="fas fa-circle-exclamation fa-xl me-2"></i>
 				<span>
-					If gear is missing, check the selected phase and your gear filters.
+					{t('If gear is missing, check the selected phase and your gear filters.')}
 					<br />
-					If the problem persists, save any un-saved data, click the
+					{t('If the problem persists, save any un-saved data, click the')}
 					<i className="fas fa-cog mx-1"></i>
-					to open your sim options, then click the "Restore Defaults".
+					{t('to open your sim options, then click the "Restore Defaults".')}
 				</span>
 			</div>,
 		);
@@ -519,7 +519,7 @@ export class SelectorModal extends BaseModal {
 					item: enchant,
 					id: enchant.effectId,
 					actionId: enchant.spellId ? ActionId.fromSpellId(enchant.spellId) : ActionId.fromItemId(enchant.itemId),
-					name: enchant.name,
+					name: getEnchantDescriptionSync(enchant),
 					quality: enchant.quality,
 					phase: enchant.phase || 1,
 					baseEP: this.player.computeStatsEP(new Stats(enchant.stats)),
