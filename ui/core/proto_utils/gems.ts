@@ -201,11 +201,11 @@ export const MYSTICAL_SKYFIRE_DIAMOND = MetaGemCondition.fromCompareColors(25893
 export const POTENT_UNSTABLE_DIAMOND = MetaGemCondition.fromCompareColors(32640, 'Requires more Blue Gems than Yellow Gems.', GemColor.GemColorBlue, GemColor.GemColorYellow);
 
 const emptyGemSocketIcons: Partial<Record<GemColor, string>> = {
-	[GemColor.GemColorBlue]: 'https://wow.zamimg.com/images/icons/socket-blue.gif',
-	[GemColor.GemColorMeta]: 'https://wow.zamimg.com/images/icons/socket-meta.gif',
-	[GemColor.GemColorRed]: 'https://wow.zamimg.com/images/icons/socket-red.gif',
-	[GemColor.GemColorYellow]: 'https://wow.zamimg.com/images/icons/socket-yellow.gif',
-	[GemColor.GemColorPrismatic]: 'https://wow.zamimg.com/images/icons/socket-prismatic.gif',
+	[GemColor.GemColorBlue]: '/wotlk/assets/icons/socket-blue.gif',
+	[GemColor.GemColorMeta]: '/wotlk/assets/icons/socket-meta.gif',
+	[GemColor.GemColorRed]: '/wotlk/assets/icons/socket-red.gif',
+	[GemColor.GemColorYellow]: '/wotlk/assets/icons/socket-yellow.gif',
+	[GemColor.GemColorPrismatic]: '/wotlk/assets/icons/socket-prismatic.gif',
 };
 export function getEmptyGemSocketIconUrl(color: GemColor): string {
 	if (emptyGemSocketIcons[color])

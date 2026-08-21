@@ -52,10 +52,10 @@ func NewItemSet(set ItemSet) *ItemSet {
 
 	if WITH_DB {
 		if !foundName {
-			panic("No items found for set " + set.Name)
+			return nil
 		}
 		if len(set.AlternativeName) > 0 && !foundAlternativeName {
-			panic("No items found for set alternative " + set.AlternativeName)
+			return nil
 		}
 	}
 

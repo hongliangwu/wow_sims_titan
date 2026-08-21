@@ -37,7 +37,7 @@ const emptyGlyphData: GlyphData = {
 	id: 0,
 	name: 'Empty',
 	description: '',
-	iconUrl: 'https://wow.zamimg.com/images/wow/icons/medium/inventoryslot_empty.jpg',
+	iconUrl: '/wotlk/assets/icons/medium/inventoryslot_empty.jpg',
 	quality: null,
 };
 

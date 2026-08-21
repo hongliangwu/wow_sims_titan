@@ -359,7 +359,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecMage, {
 			spec: Spec.SpecMage,
 			tooltip: 'FFB Fire Mage',
 			defaultName: 'FFB Fire',
-			iconUrl: "https://wow.zamimg.com/images/wow/icons/medium/ability_mage_frostfirebolt.jpg",
+			iconUrl: "/wotlk/assets/icons/medium/ability_mage_frostfirebolt.jpg",
 
 			talents: Presets.FrostfireTalents.data,
 			specOptions: Presets.DefaultFFBOptions,

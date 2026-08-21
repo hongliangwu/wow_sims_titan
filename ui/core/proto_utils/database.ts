@@ -324,28 +324,13 @@ export class Database {
 		return await db.spellIcons[spellId];
 	}
 
+	// Remote tooltip fetch disabled for local/offline use.
+	// Item/spell name and icon are resolved from local db.json in fill().
 	private static async getWowheadItemTooltipData(id: number): Promise<IconData> {
-		return Database.getWowheadTooltipData(id, 'item');
+		return IconData.create({ id: id });
 	}
 	private static async getWowheadSpellTooltipData(id: number): Promise<IconData> {
-		return Database.getWowheadTooltipData(id, 'spell');
-	}
-	private static async getWowheadTooltipData(id: number, tooltipPostfix: string): Promise<IconData> {
-		const locale = getWowheadLocaleId();
-		const localeQuery = locale ? `&locale=${locale}` : '';
-		const url = `https://nether.wowhead.com/wotlk/tooltip/${tooltipPostfix}/${id}?lvl=${CHARACTER_LEVEL}${localeQuery}`;
-		try {
-			const response = await fetch(url);
-			const json = await response.json();
-			return IconData.create({
-				id: id,
-				name: json['name'],
-				icon: json['icon'],
-			});
-		} catch (e) {
-			console.error('Error while fetching url: ' + url + '\n\n' + e);
-			return IconData.create();
-		}
+		return IconData.create({ id: id });
 	}
 
 	public static mergeSimDatabases(db1: SimDatabase, db2: SimDatabase): SimDatabase {

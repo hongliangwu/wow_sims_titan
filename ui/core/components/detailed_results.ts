@@ -445,8 +445,8 @@ export class EmbeddedDetailedResults extends DetailedResults {
 		const newTabBtn = document.createElement('div');
 		newTabBtn.classList.add('detailed-results-controls-div');
 		newTabBtn.innerHTML = `
-			<button class="detailed-results-new-tab-button btn btn-primary">View in Separate Tab</button>
-			<button class="detailed-results-1-iteration-button btn btn-primary">Sim 1 Iteration</button>
+			<button class="detailed-results-new-tab-button btn btn-primary">在新标签页中查看</button>
+			<button class="detailed-results-1-iteration-button btn btn-primary">模拟 1 次迭代</button>
 		`;
 
 		this.rootElem.prepend(newTabBtn);

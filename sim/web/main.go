@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -52,35 +51,8 @@ func main() {
 	flag.Parse()
 
 	fmt.Printf("Version: %s\n", Version)
-	if !*skipVersionCheck && Version != "development" {
-		go func() {
-			resp, err := http.Get("https://api.github.com/repos/wowsims/wotlk/releases/latest")
-			if err != nil {
-				return
-			}
-
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return
-			}
-
-			result := struct {
-				Tag  string `json:"tag_name"`
-				URL  string `json:"html_url"`
-				Name string `json:"name"`
-			}{}
-			if err := json.Unmarshal(body, &result); err != nil {
-				return
-			}
-
-			if result.Tag != Version {
-				outdated = 2
-				fmt.Printf("New version of simulator available: %s\n\tDownload at: %s\n", result.Name, result.URL)
-			} else {
-				outdated = 1
-			}
-		}()
-	}
+	// Version check disabled for local/offline use.
+	_ = skipVersionCheck
 
 	s := &server{
 		progMut:         sync.RWMutex{},

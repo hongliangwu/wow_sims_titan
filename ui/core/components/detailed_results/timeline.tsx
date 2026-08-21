@@ -50,21 +50,21 @@ export class Timeline extends ResultComponent {
 				<div className="d-flex flex-column">
 					<p>
 						<i className="warning fa fa-exclamation-triangle fa-xl me-2"></i>
-						Timeline data visualizes only 1 sim iteration.
+						时间轴数据仅展示 1 次模拟迭代。
 					</p>
 					<p>
-						Note: You can move the timeline by holding <kbd>Shift</kbd> while scrolling, or by clicking and dragging.
+						提示：按住 <kbd>Shift</kbd> 滚动或点击拖动可移动时间轴。
 					</p>
 				</div>
 				<select className="timeline-chart-picker form-select">
 					<option className="rotation-option" value="rotation">
-						Rotation
+						循环
 					</option>
 					<option className="dps-option" value="dps">
 						DPS
 					</option>
 					<option className="threat-option" value="threat">
-						Threat
+						仇恨
 					</option>
 				</select>
 			</div>,
@@ -113,11 +113,11 @@ export class Timeline extends ResultComponent {
 			series: [], // Set dynamically
 			xaxis: {
 				title: {
-					text: 'Time (s)',
+					text: '时间 (秒)',
 				},
 			},
 			noData: {
-				text: 'Waiting for data...',
+				text: '等待数据加载...',
 			},
 			stroke: {
 				width: 2,
@@ -184,7 +184,7 @@ export class Timeline extends ResultComponent {
 					show: true,
 				},
 				title: {
-					text: 'Time (s)',
+					text: '时间 (秒)',
 				},
 			},
 			yaxis: [],
@@ -278,13 +278,13 @@ export class Timeline extends ResultComponent {
 		const dpsAxisMax = Math.ceil(maxDps / 100) * 100;
 		options.yaxis.push({
 			color: dpsColor,
-			seriesName: 'DPS',
+			seriesName: '秒伤',
 			min: 0,
 			max: dpsAxisMax,
 			tickAmount: 10,
 			decimalsInFloat: 0,
 			title: {
-				text: 'DPS',
+				text: '秒伤',
 				style: {
 					color: dpsColor,
 				},
@@ -309,13 +309,13 @@ export class Timeline extends ResultComponent {
 		const axisMax = Math.ceil(maxThreat / 10000) * 10000;
 		options.yaxis.push({
 			color: threatColor,
-			seriesName: 'Threat',
+			seriesName: '仇恨',
 			min: 0,
 			max: axisMax,
 			tickAmount: 10,
 			decimalsInFloat: 0,
 			title: {
-				text: 'Threat',
+				text: '仇恨',
 				style: {
 					color: threatColor,
 				},
@@ -371,7 +371,7 @@ export class Timeline extends ResultComponent {
 
 		options.colors.push(manaColor);
 		options.series.push({
-			name: 'Mana',
+			name: '法力',
 			type: 'line',
 			data: manaLogs.map(log => {
 				return {
@@ -381,13 +381,13 @@ export class Timeline extends ResultComponent {
 			}),
 		});
 		options.yaxis.push({
-			seriesName: 'Mana',
+			seriesName: '法力',
 			opposite: true, // Appear on right side
 			min: 0,
 			max: maxMana,
 			tickAmount: 10,
 			title: {
-				text: 'Mana',
+				text: '法力',
 				style: {
 					color: manaColor,
 				},
@@ -421,7 +421,7 @@ export class Timeline extends ResultComponent {
 	private addThreatSeries(unit: UnitMetrics, options: any, colorOverride: string): TooltipHandler | null {
 		options.colors.push(colorOverride || threatColor);
 		options.series.push({
-			name: 'Threat',
+			name: '仇恨',
 			type: 'line',
 			data: unit.threatLogs
 				.filter(log => log.timestamp >= 0)
@@ -635,7 +635,7 @@ export class Timeline extends ResultComponent {
 			customClass: 'timeline-tooltip',
 			html: true,
 			placement: 'bottom',
-			title: isHiddenLabel ? 'Show Row' : 'Hide Row',
+			title: isHiddenLabel ? '显示该行' : '隐藏该行',
 		});
 		const updateHidden = () => {
 			if (isHiddenLabel == Boolean(this.hiddenIds.find(hiddenId => hiddenId.equals(actionId)))) {
@@ -802,14 +802,14 @@ export class Timeline extends ResultComponent {
 			iconElem.classList.add('rotation-timeline-cast-icon');
 			actionId.setBackground(iconElem);
 			castElem.appendChild(iconElem);
-			const travelTimeStr = castLog.travelTime == 0 ? '' : ` + ${castLog.travelTime.toFixed(2)}s travel time`;
+			const travelTimeStr = castLog.travelTime == 0 ? '' : ` + ${castLog.travelTime.toFixed(2)}秒 飞行时间`;
 			const totalDamage = castLog.totalDamage();
 
 			const tt = (
 				<div className="timeline-tooltip">
 					<span>
-						{castLog.actionId!.name} from {castLog.timestamp.toFixed(2)}s to {(castLog.timestamp + castLog.castTime).toFixed(2)}s (
-						{castLog.castTime > 0 && `${castLog.castTime.toFixed(2)}s, `} {castLog.effectiveTime.toFixed(2)}s GCD Time)
+						{castLog.actionId!.name} 从 {castLog.timestamp.toFixed(2)}秒 到 {(castLog.timestamp + castLog.castTime).toFixed(2)}秒（
+						{castLog.castTime > 0 && `${castLog.castTime.toFixed(2)}秒, `} {castLog.effectiveTime.toFixed(2)}秒 GCD 时间）
 						{travelTimeStr.length > 0 && travelTimeStr}
 					</span>
 					{castLog.damageDealtLogs.length > 0 && (
@@ -819,14 +819,14 @@ export class Timeline extends ResultComponent {
 									<span>
 										{ddl.timestamp.toFixed(2)}s - {htmlDecode(ddl.resultString())}
 									</span>
-									{ddl.source?.isTarget && <span className="threat-metrics"> ({ddl.threat.toFixed(1)} Threat)</span>}
+									{ddl.source?.isTarget && <span className="threat-metrics"> ({ddl.threat.toFixed(1)} 仇恨)</span>}
 								</li>
 							))}
 						</ul>
 					)}
 					{totalDamage > 0 && (
 						<span>
-							Total: {totalDamage.toFixed(2)} ({(totalDamage / (castLog.effectiveTime || 1)).toFixed(2)} DPET)
+							总计：{totalDamage.toFixed(2)}（{(totalDamage / (castLog.effectiveTime || 1)).toFixed(2)} DPET）
 						</span>
 					)}
 				</div>
@@ -851,7 +851,7 @@ export class Timeline extends ResultComponent {
 							<span>
 								{ddl.timestamp.toFixed(2)}s - {ddl.actionId!.name} {htmlDecode(ddl.resultString())}
 							</span>
-							{ddl.source?.isTarget && <span className="threat-metrics"> ({ddl.threat.toFixed(1)} Threat)</span>}
+							{ddl.source?.isTarget && <span className="threat-metrics"> ({ddl.threat.toFixed(1)} 仇恨)</span>}
 						</div>
 					);
 
@@ -995,7 +995,7 @@ export class Timeline extends ResultComponent {
 						${log.damageLogs.map(damageLog => this.tooltipLogItem(damageLog, damageLog.resultString())).join('')}
 					</ul>
 					<div class="timeline-tooltip-body-row">
-						<span class="series-color">DPS: ${log.dps.toFixed(2)}</span>
+						<span class="series-color">秒伤：${log.dps.toFixed(2)}</span>
 					</div>
 				</div>
 				${this.tooltipAurasSection(log)}
@@ -1019,13 +1019,13 @@ export class Timeline extends ResultComponent {
 			</div>
 			<div class="timeline-tooltip-body">
 				<div class="timeline-tooltip-body-row">
-					<span class="series-color">Before: ${log.threatBefore.toFixed(1)}</span>
+					<span class="series-color">之前：${log.threatBefore.toFixed(1)}</span>
 				</div>
 				<ul class="timeline-threat-events">
-					${log.logs.map(log => this.tooltipLogItem(log, `${log.threat.toFixed(1)} Threat`)).join('')}
+					${log.logs.map(log => this.tooltipLogItem(log, `${log.threat.toFixed(1)} 仇恨`)).join('')}
 				</ul>
 				<div class="timeline-tooltip-body-row">
-					<span class="series-color">After: ${log.threatAfter.toFixed(1)}</span>
+					<span class="series-color">之后：${log.threatAfter.toFixed(1)}</span>
 				</div>
 			</div>
 			${includeAuras ? this.tooltipAurasSection(log) : ''}
@@ -1044,13 +1044,13 @@ export class Timeline extends ResultComponent {
 				</div>
 				<div className="timeline-tooltip-body">
 					<div className="timeline-tooltip-body-row">
-						<span className="series-color">Before: {valToDisplayString(log.valueBefore)}</span>
+						<span className="series-color">之前：{valToDisplayString(log.valueBefore)}</span>
 					</div>
 					<ul className="timeline-mana-events">
 						{log.logs.map(manaChangedLog => this.tooltipLogItemElem(manaChangedLog, manaChangedLog.resultString()))}
 					</ul>
 					<div className="timeline-tooltip-body-row">
-						<span className="series-color">After: {valToDisplayString(log.valueAfter)}</span>
+						<span className="series-color">之后：{valToDisplayString(log.valueAfter)}</span>
 					</div>
 				</div>
 				{includeAuras && this.tooltipAurasSectionElem(log)}
@@ -1091,7 +1091,7 @@ export class Timeline extends ResultComponent {
 		return (
 			<div className="timeline-tooltip-auras">
 				<div className="timeline-tooltip-body-row">
-					<span className="bold">Active Auras</span>
+					<span className="bold">当前光环</span>
 				</div>
 				<ul className="timeline-active-auras">
 					{log.activeAuras.map(auraLog => {

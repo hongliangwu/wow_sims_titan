@@ -326,7 +326,7 @@ enum IconSizes {
 export function getSpecIcon(klass: Class, specNumber: number, size: IconSizes = IconSizes.Medium): string {
 	const fileName = talentTreeIcons[klass][specNumber];
 
-	return `https://wow.zamimg.com/images/wow/icons/${size}/${fileName}`;
+	return `/wotlk/assets/icons/${size}/${fileName}`;
 }
 
 // Returns the icon for a given spec based on talent point allocation.
@@ -346,7 +346,7 @@ export function getTalentTreeIcon(spec: Spec, talentsString: string, size: IconS
 
 	const fileName = talentTreeIcons[specToClass[spec]][specNumber];
 
-	return `https://wow.zamimg.com/images/wow/icons/${size}/${fileName}`;
+	return `/wotlk/assets/icons/${size}/${fileName}`;
 }
 
 // Gets the URL for the individual sim corresponding to the given spec.

@@ -36,7 +36,7 @@ export class Entity {
 
 	toString(): string {
 		if (this.isTarget) {
-			return `Target ${this.index + 1}`;
+			return `目标 ${this.index + 1}`;
 		} else if (this.isPet) {
 			return `${this.ownerName} (#${this.index + 1}) - ${this.name}`;
 		} else {
@@ -46,7 +46,7 @@ export class Entity {
 
 	toHTMLString(): string {
 		if (this.isTarget) {
-			return `<span class="text-danger">[Target ${this.index + 1}]</span>`;
+			return `<span class="text-danger">[目标 ${this.index + 1}]</span>`;
 		} else if (this.isPet) {
 			return `<span class="text-primary">[${this.ownerName} ${this.index + 1}]</span> - ${
 				this.name
@@ -356,48 +356,48 @@ export class DamageDealtLog extends SimLog {
 		let result = '';
 
 		if (this.isHealing()) {
-			result += 'Heal ';
+			result += '治疗 ';
 		} else if (this.isShielding()) {
-			result += 'Shield ';
+			result += '护盾 ';
 		}
 
 		result += this.miss
-			? 'Miss'
+			? '未命中'
 			: this.dodge
-			? 'Dodge'
+			? '躲闪'
 			: this.parry
-			? 'Parry'
+			? '招架'
 			: this.glance
-			? 'Glance'
+			? '偏斜'
 			: this.block
 			? this.crit
-				? 'Critical Block'
-				: 'Block'
+				? '暴击格挡'
+				: '格挡'
 			: this.crit
-			? 'Crit'
+			? '暴击'
 			: this.crush
-			? 'Crush'
+			? '碾压'
 			: this.tick
-			? 'Tick'
-			: 'Hit';
+			? '跳动'
+			: '命中';
 
 		result += ' ' + this.target?.toHTMLString();
 		if (!this.miss && !this.dodge && !this.parry) {
-			result += ` for <strong class="text-danger">${this.amount.toFixed(2)} damage</strong>`;
+			result += ` 造成 <strong class="text-danger">${this.amount.toFixed(2)} 点伤害</strong>`;
 			if (this.partialResist1_4) {
-				result += ' (25% Resist)';
+				result += '（25% 被抵抗）';
 			} else if (this.partialResist2_4) {
-				result += ' (50% Resist)';
+				result += '（50% 被抵抗）';
 			} else if (this.partialResist3_4) {
-				result += ' (75% Resist)';
+				result += '（75% 被抵抗）';
 			}
-			result += '.';
+			result += '。';
 		}
 		return result;
 	}
 
 	toString(includeTimestamp = true): string {
-		const threatPostfix = this.source?.isTarget ? '' : ` (${this.threat.toFixed(2)} Threat)`;
+		const threatPostfix = this.source?.isTarget ? '' : ` （${this.threat.toFixed(2)} 仇恨）`;
 		return `${this.toStringPrefix(
 			includeTimestamp,
 		)} ${this.newActionIdLink()} ${this.resultString()}${threatPostfix}`;
@@ -555,8 +555,8 @@ export class AuraEventLog extends SimLog {
 	}
 
 	toString(includeTimestamp = true): string {
-		return `${this.toStringPrefix(includeTimestamp)} Aura ${
-			this.isGained ? 'gained' : this.isFaded ? 'faded' : 'refreshed'
+		return `${this.toStringPrefix(includeTimestamp)} 光环 ${
+			this.isGained ? '获得' : this.isFaded ? '消失' : '刷新'
 		}: ${this.newActionIdLink()}.`;
 	}
 
@@ -592,7 +592,7 @@ export class AuraStacksChangeLog extends SimLog {
 	}
 
 	toString(includeTimestamp = true): string {
-		return `${this.toStringPrefix(includeTimestamp)} ${this.newActionIdLink()} stacks: ${
+		return `${this.toStringPrefix(includeTimestamp)} ${this.newActionIdLink()} 层数：${
 			this.oldStacks
 		} &rarr; ${this.newStacks}.`;
 	}
@@ -766,11 +766,11 @@ export class ResourceChangedLog extends SimLog {
 		const isHealth = this.resourceType == ResourceType.ResourceTypeHealth;
 		const verb = isHealth
 			? this.isSpend
-				? 'Lost'
-				: 'Recovered'
+				? '失去'
+				: '恢复'
 			: this.isSpend
-			? 'Spent'
-			: 'Gained';
+			? '消耗'
+			: '获得';
 		const resourceName = resourceNames.get(this.resourceType)!;
 		const resourceKlass = `resource-${resourceName.replace(/\s/g, '-').toLowerCase()}`;
 
@@ -778,9 +778,9 @@ export class ResourceChangedLog extends SimLog {
 			includeTimestamp,
 		)} ${verb} <strong class="${resourceKlass}">${signedDiff.toFixed(
 			1,
-		)} ${resourceName}</strong> from ${this.newActionIdLink()}. (${this.valueBefore.toFixed(
+		)} ${resourceName}</strong> 来自 ${this.newActionIdLink()}。（${this.valueBefore.toFixed(
 			1,
-		)} &rarr; ${this.valueAfter.toFixed(1)})`;
+		)} &rarr; ${this.valueAfter.toFixed(1)}）`;
 	}
 
 	resultString(): string {
@@ -839,7 +839,7 @@ export class ResourceChangedLogGroup extends SimLog {
 	toString(includeTimestamp = true): string {
 		return `${this.toStringPrefix(includeTimestamp)} ${resourceNames.get(
 			this.resourceType,
-		)}: ${this.valueBefore.toFixed(1)} &rarr; ${this.valueAfter.toFixed(1)}`;
+		)}：${this.valueBefore.toFixed(1)} &rarr; ${this.valueAfter.toFixed(1)}`;
 	}
 
 	static fromLogs(logs: Array<SimLog>): Record<ResourceType, Array<ResourceChangedLogGroup>> {
@@ -889,7 +889,7 @@ export class MajorCooldownUsedLog extends SimLog {
 	toString(includeTimestamp = true): string {
 		return `${this.toStringPrefix(
 			includeTimestamp,
-		)} Major cooldown used: ${this.newActionIdLink()}.`;
+		)} 主要冷却已使用：${this.newActionIdLink()}.`;
 	}
 
 	static parse(params: SimLogParams): Promise<MajorCooldownUsedLog> | null {
@@ -958,7 +958,7 @@ export class CastCompletedLog extends SimLog {
 	}
 
 	toString(includeTimestamp = true): string {
-		return `${this.toStringPrefix(includeTimestamp)} Completed cast ${this.actionId!.name}.`;
+		return `${this.toStringPrefix(includeTimestamp)} 完成施法 ${this.actionId!.name}.`;
 	}
 
 	static parse(params: SimLogParams): Promise<CastCompletedLog> | null {
@@ -1027,7 +1027,7 @@ export class CastLog extends SimLog {
 	toString(includeTimestamp = true): string {
 		return `${this.toStringPrefix(includeTimestamp)} Casting ${
 			this.actionId!.name
-		} (Cast time = ${this.castTime.toFixed(2)}s).`;
+		}（施法时间 = ${this.castTime.toFixed(2)}秒）.`;
 	}
 
 	totalDamage(): number {
@@ -1108,13 +1108,13 @@ export class StatChangeLog extends SimLog {
 
 	toString(includeTimestamp = true): string {
 		if (this.isGain) {
-			return `${this.toStringPrefix(includeTimestamp)} Gained ${
+			return `${this.toStringPrefix(includeTimestamp)} 获得 ${
 				this.stats
-			} from ${this.newActionIdLink()}.`;
+			} 来自 ${this.newActionIdLink()}.`;
 		} else {
-			return `${this.toStringPrefix(includeTimestamp)} Lost ${
+			return `${this.toStringPrefix(includeTimestamp)} 失去 ${
 				this.stats
-			} from fading ${this.newActionIdLink()}.`;
+			} 来自消退的 ${this.newActionIdLink()}.`;
 		}
 	}
 
