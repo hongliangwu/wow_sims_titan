@@ -26,8 +26,6 @@ import {
 import { gemEligibleForSocket, gemMatchesSocket, isEpicQualityGem } from './gems.js';
 import { EquippedItem } from './equipped_item.js';
 import { Gear, ItemSwapGear } from './gear.js';
-import { CHARACTER_LEVEL } from '../constants/mechanics.js';
-import { getLanguageCode, getWowheadLocaleId } from '../constants/lang.js';
 import { distinct } from '../utils.js';
 import { registerTitanItemEffects, registerTitanItemIds, registerTitanItemSets } from './item_tooltip.js';
 
@@ -282,6 +280,12 @@ export class Database {
 
 	static async getItemIconData(itemId: number): Promise<IconData> {
 		const db = await Database.get();
+
+		// Check pre-loaded data first (items + gems are pre-loaded into itemIcons).
+		if (db.itemIcons[itemId]) {
+			return await db.itemIcons[itemId];
+		}
+
 		const dbItem = db.items.get(itemId);
 		if (itemId >= 200000 && dbItem) {
 			return IconData.create({
@@ -290,18 +294,10 @@ export class Database {
 				icon: dbItem.icon,
 			});
 		}
-		const lang = getLanguageCode();
-		if (lang) {
-			const key = `${lang}:${itemId}`;
-			if (!db.localizedItemIcons[key]) {
-				db.localizedItemIcons[key] = Database.getWowheadItemTooltipData(itemId);
-			}
-			return await db.localizedItemIcons[key];
-		}
-		if (!db.itemIcons[itemId]) {
-			db.itemIcons[itemId] = Database.getWowheadItemTooltipData(itemId);
-		}
-		return await db.itemIcons[itemId];
+
+		// Remote tooltip fetch disabled for local/offline use.
+		// Return empty IconData for items not found in local database.
+		return IconData.create({ id: itemId });
 	}
 
 	static async getSpellIconData(spellId: number): Promise<IconData> {
@@ -310,28 +306,16 @@ export class Database {
 			return IconData.create(titanSpell);
 		}
 		const db = await Database.get();
-		const lang = getLanguageCode();
-		if (lang) {
-			const key = `${lang}:${spellId}`;
-			if (!db.localizedSpellIcons[key]) {
-				db.localizedSpellIcons[key] = Database.getWowheadSpellTooltipData(spellId);
-			}
-			return await db.localizedSpellIcons[key];
+
+		// Check pre-loaded spell icons first.
+		if (db.spellIcons[spellId]) {
+			return await db.spellIcons[spellId];
 		}
-		if (!db.spellIcons[spellId]) {
-			db.spellIcons[spellId] = Database.getWowheadSpellTooltipData(spellId);
-		}
-		return await db.spellIcons[spellId];
+
+		// Remote tooltip fetch disabled for local/offline use.
+		return IconData.create({ id: spellId });
 	}
 
-	// Remote tooltip fetch disabled for local/offline use.
-	// Item/spell name and icon are resolved from local db.json in fill().
-	private static async getWowheadItemTooltipData(id: number): Promise<IconData> {
-		return IconData.create({ id: id });
-	}
-	private static async getWowheadSpellTooltipData(id: number): Promise<IconData> {
-		return IconData.create({ id: id });
-	}
 
 	public static mergeSimDatabases(db1: SimDatabase, db2: SimDatabase): SimDatabase {
 		return SimDatabase.create({
