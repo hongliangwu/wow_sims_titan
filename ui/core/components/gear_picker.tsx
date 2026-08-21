@@ -10,7 +10,7 @@ import { Class, GemColor, ItemQuality, ItemSlot, ItemSpec, ItemType } from '../p
 import { DatabaseFilters, RepFaction, UIEnchant as Enchant, UIGem as Gem, UIItem as Item, UIItem_FactionRestriction } from '../proto/ui.js';
 import { ActionId } from '../proto_utils/action_id';
 import { t } from '../i18n.js';
-import { attachLocalItemTooltip, clearLocalItemTooltip, isTitanCustomItemId, titanDuplicateKey, titanOriginLabel } from '../proto_utils/item_tooltip';
+import { attachLocalItemTooltip, attachLocalEnchantTooltip, clearLocalItemTooltip, isTitanCustomItemId, titanDuplicateKey, titanOriginLabel } from '../proto_utils/item_tooltip';
 import { getEnchantDescription, getUniqueEnchantString } from '../proto_utils/enchants';
 import { EquippedItem } from '../proto_utils/equipped_item';
 import { gemMatchesSocket, getEmptyGemSocketIconUrl } from '../proto_utils/gems';
@@ -187,14 +187,12 @@ export class ItemRenderer extends Component {
 
 		this.player.setWowheadData(newItem, this.iconElem);
 		this.player.setWowheadData(newItem, this.nameElem);
-		if (isTitanCustomItemId(newItem.item.id)) {
-			const tooltipCtx = () => ({
-				equipped: playerEquippedTooltipItems(this.player),
-				gems: newItem.gems,
-			});
-			attachLocalItemTooltip(this.iconElem, newItem.item, tooltipCtx);
-			attachLocalItemTooltip(this.nameElem, newItem.item, tooltipCtx);
-		}
+		const tooltipCtx = () => ({
+			equipped: playerEquippedTooltipItems(this.player),
+			gems: newItem.gems,
+		});
+		attachLocalItemTooltip(this.iconElem, newItem.item, tooltipCtx);
+		attachLocalItemTooltip(this.nameElem, newItem.item, tooltipCtx);
 		newItem
 			.asActionId()
 			.fill()
@@ -211,15 +209,7 @@ export class ItemRenderer extends Component {
 			getEnchantDescription(newItem.enchant).then(description => {
 				this.enchantElem.textContent = description;
 			});
-			// Make enchant text hover have a tooltip.
-			if (newItem.enchant.spellId) {
-				this.enchantElem.href = ActionId.makeSpellUrl(newItem.enchant.spellId);
-				this.enchantElem.dataset.wowhead = `domain=${getLanguageCode() ? getLanguageCode() + '.' : ''}wotlk&spell=${newItem.enchant.spellId}`;
-			} else {
-				this.enchantElem.href = ActionId.makeItemUrl(newItem.enchant.itemId);
-				this.enchantElem.dataset.wowhead = `domain=${getLanguageCode() ? getLanguageCode() + '.' : ''}wotlk&item=${newItem.enchant.itemId}`;
-			}
-			this.enchantElem.dataset.whtticon = 'false';
+			attachLocalEnchantTooltip(this.enchantElem, newItem.enchant);
 		}
 
 		newItem.allSocketColors().forEach((socketColor, gemIdx) => {
@@ -391,12 +381,10 @@ export class IconItemSwapPicker extends Component {
 
 			newItem.asActionId().fillAndSet(this.iconAnchor, true, true);
 			this.player.setWowheadData(newItem, this.iconAnchor);
-			if (isTitanCustomItemId(newItem.item.id)) {
-				attachLocalItemTooltip(this.iconAnchor, newItem.item, () => ({
-					equipped: playerEquippedTooltipItems(this.player),
-					gems: newItem.gems,
-				}));
-			}
+			attachLocalItemTooltip(this.iconAnchor, newItem.item, () => ({
+				equipped: playerEquippedTooltipItems(this.player),
+				gems: newItem.gems,
+			}));
 
 			newItem.allSocketColors().forEach((socketColor, gemIdx) => {
 				this.socketsContainerElem.appendChild(createGemContainer(socketColor, newItem.gems[gemIdx]));

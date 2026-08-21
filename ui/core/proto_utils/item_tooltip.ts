@@ -13,8 +13,9 @@ import {
 	Stat,
 	WeaponType,
 } from '../proto/common.js';
-import { UIGem as Gem, UIItem as Item } from '../proto/ui.js';
+import { UIGem as Gem, UIEnchant as Enchant, UIItem as Item } from '../proto/ui.js';
 import { gemMatchesSocket } from './gems.js';
+import { getEnchantDescriptionSync, formatEnchantStatsCn } from './enchants.js';
 
 const qualityColors: Record<ItemQuality, string> = {
 	[ItemQuality.ItemQualityJunk]: '#9d9d9d',
@@ -471,14 +472,37 @@ export function buildItemTooltipHtml(item: Item, ctx: ItemTooltipContext = {}): 
 }
 
 export function attachLocalItemTooltip(elem: HTMLElement, item: Item, ctx: ItemTooltipContext | (() => ItemTooltipContext) = {}) {
-	if (!isTitanCustomItemId(item.id)) {
-		return;
-	}
 	clearLocalItemTooltip(elem);
 	new Tooltip(elem, {
 		html: true,
 		sanitize: false,
 		title: () => buildItemTooltipHtml(item, typeof ctx === 'function' ? ctx() : ctx),
+		customClass: 'titan-item-tooltip',
+		placement: 'right',
+		trigger: 'hover',
+		container: 'body',
+		delay: { show: 80, hide: 40 },
+	});
+}
+
+export function buildEnchantTooltipHtml(enchant: Enchant): string {
+	const color = qualityColors[enchant.quality] || '#ffffff';
+	const rows: string[] = [];
+	const name = getEnchantDescriptionSync(enchant);
+	rows.push(`<div class="titan-tt-name" style="color:${color}">${escapeHtml(name)}</div>`);
+	const statsDesc = formatEnchantStatsCn(enchant.stats);
+	if (statsDesc) {
+		rows.push(`<div class="titan-tt-green">${escapeHtml(statsDesc)}</div>`);
+	}
+	return rows.join('');
+}
+
+export function attachLocalEnchantTooltip(elem: HTMLElement, enchant: Enchant) {
+	clearLocalItemTooltip(elem);
+	new Tooltip(elem, {
+		html: true,
+		sanitize: false,
+		title: () => buildEnchantTooltipHtml(enchant),
 		customClass: 'titan-item-tooltip',
 		placement: 'right',
 		trigger: 'hover',
